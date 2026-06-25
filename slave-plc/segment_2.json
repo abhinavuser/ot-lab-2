@@ -1,0 +1,11 @@
+{
+  "segment_id": 2,
+  "name": "Central (Junction)",
+  "devices": [
+    {"id": 1, "type": "TRACK_SWITCH", "name": "Switch Central-A", "modbus_register": 100},
+    {"id": 2, "type": "TRACK_SWITCH", "name": "Switch Central-B", "modbus_register": 101},
+    {"id": 3, "type": "SIGNAL", "name": "Signal Central", "modbus_register": 110},
+    {"id": 4, "type": "BARRIER", "name": "Barrier Central", "modbus_register": 120},
+    {"id": 5, "type": "OCCUPANCY_SENSOR", "name": "Occupancy Central", "modbus_register": 130}
+  ]
+}

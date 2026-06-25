@@ -1,0 +1,225 @@
+services:
+  # ============================================================================
+  # CONTROL CENTER
+  # ============================================================================
+
+  scada:
+    image: python:3.11-slim
+    container_name: railroad-scada
+    hostname: scada
+    networks:
+      dmz-network:
+        ipv4_address: 172.27.0.20
+      ot-network:
+        ipv4_address: 172.25.0.20
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./scada:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+      - SCADA_ROLE=central_control
+      - MASTER_PLC_IP=172.25.0.10
+      - MASTER_PLC_PORT=502
+    command: bash -c "pip install --quiet flask flask-cors requests && python /app/scada_server.py"
+    restart: unless-stopped
+    depends_on:
+      - master-plc
+
+  # ============================================================================
+  # OT NETWORK - PLC LAYER
+  # ============================================================================
+
+  master-plc:
+    image: python:3.11-slim
+    container_name: railroad-master-plc
+    hostname: master-plc
+    networks:
+      ot-network:
+        ipv4_address: 172.25.0.10
+    ports:
+      - "5020:502"
+      - "8085:8080"
+    volumes:
+      - ./master-plc:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PLC_ROLE=master
+      - LISTEN_IP=0.0.0.0
+      - LISTEN_PORT=502
+      - SLAVE_CONFIGS=/app/slave_config.json
+      - LOG_LEVEL=INFO
+    command: bash -c "pip install --quiet flask pymodbus && python /app/master_plc.py"
+    restart: unless-stopped
+
+  slave-plc-1:
+    image: python:3.11-slim
+    container_name: railroad-slave-plc-1
+    hostname: slave-plc-1
+    networks:
+      ot-network:
+        ipv4_address: 172.25.1.10
+    ports:
+      - "5021:502"
+      - "8086:8080"
+    volumes:
+      - ./slave-plc:/app
+      - ./slave-plc/segment_1.json:/app/config/segment.json
+    environment:
+      - PYTHONUNBUFFERED=1
+      - SLAVE_ID=1
+      - SEGMENT_NAME=North
+      - LISTEN_PORT=502
+      - MASTER_IP=172.25.0.10
+      - MASTER_PORT=502
+      - LOG_LEVEL=INFO
+    command: bash -c "pip install --quiet flask && python /app/slave_plc.py"
+    restart: unless-stopped
+    depends_on:
+      - master-plc
+
+  slave-plc-2:
+    image: python:3.11-slim
+    container_name: railroad-slave-plc-2
+    hostname: slave-plc-2
+    networks:
+      ot-network:
+        ipv4_address: 172.25.2.10
+    ports:
+      - "5022:502"
+      - "8087:8080"
+    volumes:
+      - ./slave-plc:/app
+      - ./slave-plc/segment_2.json:/app/config/segment.json
+    environment:
+      - PYTHONUNBUFFERED=1
+      - SLAVE_ID=2
+      - SEGMENT_NAME=Central
+      - LISTEN_PORT=502
+      - MASTER_IP=172.25.0.10
+      - MASTER_PORT=502
+      - LOG_LEVEL=INFO
+    command: bash -c "pip install --quiet flask && python /app/slave_plc.py"
+    restart: unless-stopped
+    depends_on:
+      - master-plc
+
+  slave-plc-3:
+    image: python:3.11-slim
+    container_name: railroad-slave-plc-3
+    hostname: slave-plc-3
+    networks:
+      ot-network:
+        ipv4_address: 172.25.3.10
+    ports:
+      - "5023:502"
+      - "8088:8080"
+    volumes:
+      - ./slave-plc:/app
+      - ./slave-plc/segment_3.json:/app/config/segment.json
+    environment:
+      - PYTHONUNBUFFERED=1
+      - SLAVE_ID=3
+      - SEGMENT_NAME=South
+      - LISTEN_PORT=502
+      - MASTER_IP=172.25.0.10
+      - MASTER_PORT=502
+      - LOG_LEVEL=INFO
+    command: bash -c "pip install --quiet flask && python /app/slave_plc.py"
+    restart: unless-stopped
+    depends_on:
+      - master-plc
+
+  # ============================================================================
+  # NETWORK COMPONENTS
+  # ============================================================================
+
+  router:
+    image: alpine:latest
+    container_name: railroad-router
+    hostname: router
+    networks:
+      ot-network:
+        ipv4_address: 172.25.0.1
+      dmz-network:
+        ipv4_address: 172.27.0.2
+    volumes:
+      - ./network-config:/etc/network
+    cap_add:
+      - NET_ADMIN
+    command: /bin/sh -c "echo 1 > /proc/sys/net/ipv4/ip_forward 2>/dev/null; while true; do sleep 3600; done"
+    restart: unless-stopped
+
+  dmz-router:
+    image: alpine:latest
+    container_name: railroad-dmz-router
+    hostname: dmz-router
+    networks:
+      it-network:
+        ipv4_address: 172.26.0.1
+      dmz-network:
+        ipv4_address: 172.27.0.1
+    volumes:
+      - ./network-config:/etc/network
+    cap_add:
+      - NET_ADMIN
+    command: /bin/sh -c "echo 1 > /proc/sys/net/ipv4/ip_forward 2>/dev/null; while true; do sleep 3600; done"
+    restart: unless-stopped
+
+  # ============================================================================
+  # MONITORING (Lightweight)
+  # ============================================================================
+
+  collector:
+    image: python:3.11-slim
+    container_name: railroad-collector
+    hostname: collector
+    networks:
+      ot-network:
+        ipv4_address: 172.25.0.40
+    ports:
+      - "5140:514/udp"
+      - "5000:5000/tcp"
+    volumes:
+      - ./monitoring:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+      - SYSLOG_PORT=514
+      - LISTEN_IP=0.0.0.0
+    command: python /app/syslog_collector.py
+    restart: unless-stopped
+
+  # ============================================================================
+  # PENTEST TOOLS
+  # ============================================================================
+
+  pentest:
+    image: python:3.11-slim
+    container_name: railroad-pentest
+    hostname: pentest
+    networks:
+      ot-network:
+        ipv4_address: 172.25.0.60
+    volumes:
+      - ./scripts:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: bash -c "pip install --quiet requests pymodbus && echo 'OT Pentest Ready' && while true; do sleep 3600; done"
+    restart: unless-stopped
+
+networks:
+  it-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.26.0.0/16
+  dmz-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.27.0.0/16
+  ot-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.25.0.0/16

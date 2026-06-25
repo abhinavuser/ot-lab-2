@@ -1,0 +1,21 @@
+cluster.name: "railroad-north"
+node.name: "node-1"
+
+network.host: 0.0.0.0
+network.publish_host: elasticsearch
+
+http.port: 9200
+transport.port: 9300
+
+discovery.type: single-node
+
+action.auto_create_index: "+railr*,-.watch_*"
+
+index.number_of_shards: 1
+index.number_of_replicas: 0
+
+xpack.security.enabled: false
+xpack.ml.enabled: false
+xpack.graph.enabled: false
+
+logger.level: info

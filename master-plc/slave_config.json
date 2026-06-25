@@ -1,0 +1,25 @@
+{
+  "slaves": [
+    {
+      "id": 1,
+      "name": "North (Entrance)",
+      "ip": "172.25.1.10",
+      "port": 502,
+      "heartbeat_interval": 5
+    },
+    {
+      "id": 2,
+      "name": "Central (Junction)",
+      "ip": "172.25.2.10",
+      "port": 502,
+      "heartbeat_interval": 5
+    },
+    {
+      "id": 3,
+      "name": "South (Yard)",
+      "ip": "172.25.3.10",
+      "port": 502,
+      "heartbeat_interval": 5
+    }
+  ]
+}

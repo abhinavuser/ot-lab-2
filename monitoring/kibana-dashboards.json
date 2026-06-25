@@ -1,0 +1,42 @@
+{
+  "dashboard_config": {
+    "title": "Railroad North - SIEM Dashboard",
+    "version": "1.0",
+    "dashboards": [
+      {
+        "name": "System Overview",
+        "panels": [
+          {"type": "metric", "field": "total_messages", "title": "Total Log Messages"},
+          {"type": "metric", "field": "critical_events", "title": "Critical Events"},
+          {"type": "pie", "field": "component", "title": "Messages by Component"},
+          {"type": "timeline", "field": "@timestamp", "title": "Event Timeline"}
+        ]
+      },
+      {
+        "name": "Security Events",
+        "panels": [
+          {"type": "table", "query": "tags:critical_event", "title": "Critical Events"},
+          {"type": "bar", "field": "source_ip", "title": "Events by Source IP"},
+          {"type": "metric", "field": "rejected_commands", "title": "Rejected Commands"}
+        ]
+      },
+      {
+        "name": "Command Audit",
+        "panels": [
+          {"type": "table", "query": "tags:route_command", "title": "Route Commands"},
+          {"type": "table", "query": "tags:device_control", "title": "Device Controls"},
+          {"type": "timeline", "field": "@timestamp", "title": "Command Timeline"}
+        ]
+      },
+      {
+        "name": "PLC Health",
+        "panels": [
+          {"type": "metric", "query": "tags:master_plc", "title": "Master PLC Events"},
+          {"type": "metric", "query": "tags:slave_plc AND slave_id:1", "title": "Slave 1 Events"},
+          {"type": "metric", "query": "tags:slave_plc AND slave_id:2", "title": "Slave 2 Events"},
+          {"type": "metric", "query": "tags:slave_plc AND slave_id:3", "title": "Slave 3 Events"}
+        ]
+      }
+    ]
+  }
+}

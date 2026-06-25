@@ -1,0 +1,11 @@
+{
+  "segment_id": 3,
+  "name": "South (Yard)",
+  "devices": [
+    {"id": 1, "type": "TRACK_SWITCH", "name": "Switch South-A", "modbus_register": 100},
+    {"id": 2, "type": "TRACK_SWITCH", "name": "Switch South-B", "modbus_register": 101},
+    {"id": 3, "type": "SIGNAL", "name": "Signal South", "modbus_register": 110},
+    {"id": 4, "type": "BARRIER", "name": "Barrier South", "modbus_register": 120},
+    {"id": 5, "type": "OCCUPANCY_SENSOR", "name": "Occupancy South", "modbus_register": 130}
+  ]
+}
