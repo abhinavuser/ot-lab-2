@@ -1,33 +1,7 @@
-version: '3.8'
-
 services:
   # ============================================================================
-  # CONTROL CENTER - DMZ LAYER
+  # CONTROL CENTER (Lightweight for Local Testing)
   # ============================================================================
-  
-  ews:
-    image: ubuntu:22.04
-    container_name: railroad-ews
-    hostname: ews
-    networks:
-      it-network:
-        ipv4_address: 172.26.0.10
-      dmz-network:
-        ipv4_address: 172.27.0.10
-    ports:
-      - "5901:5901"    # VNC
-      - "3389:3389"    # RDP
-      - "8082:8080"    # OpenPLC Editor
-    volumes:
-      - ./master-plc:/home/ot/master-plc
-      - ./slave-plc:/home/ot/slave-plc
-      - ews-data:/data
-    environment:
-      - DISPLAY=:1
-    restart: unless-stopped
-    labels:
-      - "zone=dmz"
-      - "component=ews"
 
   scada:
     image: python:3.11-slim
@@ -39,33 +13,23 @@ services:
       ot-network:
         ipv4_address: 172.25.0.20
     ports:
-      - "8080:8080"    # SCADA Web UI
-      - "502:502"      # Modbus TCP
+      - "8080:8080"
     volumes:
       - ./scada:/app
-      - scada-data:/data
     environment:
       - PYTHONUNBUFFERED=1
       - SCADA_ROLE=central_control
       - MASTER_PLC_IP=172.25.0.10
       - MASTER_PLC_PORT=502
-    command: python /app/scada_server.py
+    command: bash -c "pip install --quiet flask flask-cors requests && python /app/scada_server.py"
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    labels:
-      - "zone=dmz"
-      - "component=scada"
     depends_on:
       - master-plc
 
   # ============================================================================
-  # OT NETWORK - CONTROL LAYER
+  # OT NETWORK - PLC LAYER
   # ============================================================================
-  
+
   master-plc:
     image: python:3.11-slim
     container_name: railroad-master-plc
@@ -74,10 +38,10 @@ services:
       ot-network:
         ipv4_address: 172.25.0.10
     ports:
-      - "5020:502"     # Modbus TCP
+      - "5020:502"
+      - "8085:8080"
     volumes:
       - ./master-plc:/app
-      - master-plc-data:/data
     environment:
       - PYTHONUNBUFFERED=1
       - PLC_ROLE=master
@@ -85,17 +49,8 @@ services:
       - LISTEN_PORT=502
       - SLAVE_CONFIGS=/app/slave_config.json
       - LOG_LEVEL=INFO
-    command: python /app/master_plc.py
+    command: bash -c "pip install --quiet flask pymodbus && python /app/master_plc.py"
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "python", "-c", "import socket; socket.create_connection(('localhost', 502), timeout=2)"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    labels:
-      - "zone=ot"
-      - "component=master-plc"
-      - "criticality=critical"
 
   slave-plc-1:
     image: python:3.11-slim
@@ -105,26 +60,21 @@ services:
       ot-network:
         ipv4_address: 172.25.1.10
     ports:
-      - "5021:502"     # Modbus TCP
+      - "5021:502"
+      - "8086:8080"
     volumes:
       - ./slave-plc:/app
-      - ./slave-plc/segment_1.json:/app/config/segment.json
-      - slave-plc-1-data:/data
     environment:
       - PYTHONUNBUFFERED=1
-      - PLC_ROLE=slave
       - SLAVE_ID=1
       - SEGMENT_NAME=North
       - LISTEN_PORT=502
       - MASTER_IP=172.25.0.10
       - MASTER_PORT=502
       - LOG_LEVEL=INFO
-    command: python /app/slave_plc.py
+      - SEGMENT_CONFIG=/app/segment_1.json
+    command: bash -c "pip install --quiet flask && python /app/slave_plc.py"
     restart: unless-stopped
-    labels:
-      - "zone=ot"
-      - "component=slave-plc"
-      - "segment=north"
     depends_on:
       - master-plc
 
@@ -136,26 +86,21 @@ services:
       ot-network:
         ipv4_address: 172.25.2.10
     ports:
-      - "5022:502"     # Modbus TCP
+      - "5022:502"
+      - "8087:8080"
     volumes:
       - ./slave-plc:/app
-      - ./slave-plc/segment_2.json:/app/config/segment.json
-      - slave-plc-2-data:/data
     environment:
       - PYTHONUNBUFFERED=1
-      - PLC_ROLE=slave
       - SLAVE_ID=2
       - SEGMENT_NAME=Central
       - LISTEN_PORT=502
       - MASTER_IP=172.25.0.10
       - MASTER_PORT=502
       - LOG_LEVEL=INFO
-    command: python /app/slave_plc.py
+      - SEGMENT_CONFIG=/app/segment_2.json
+    command: bash -c "pip install --quiet flask && python /app/slave_plc.py"
     restart: unless-stopped
-    labels:
-      - "zone=ot"
-      - "component=slave-plc"
-      - "segment=central"
     depends_on:
       - master-plc
 
@@ -167,90 +112,27 @@ services:
       ot-network:
         ipv4_address: 172.25.3.10
     ports:
-      - "5023:502"     # Modbus TCP
+      - "5023:502"
+      - "8088:8080"
     volumes:
       - ./slave-plc:/app
-      - ./slave-plc/segment_3.json:/app/config/segment.json
-      - slave-plc-3-data:/data
     environment:
       - PYTHONUNBUFFERED=1
-      - PLC_ROLE=slave
       - SLAVE_ID=3
       - SEGMENT_NAME=South
       - LISTEN_PORT=502
       - MASTER_IP=172.25.0.10
       - MASTER_PORT=502
       - LOG_LEVEL=INFO
-    command: python /app/slave_plc.py
+      - SEGMENT_CONFIG=/app/segment_3.json
+    command: bash -c "pip install --quiet flask && python /app/slave_plc.py"
     restart: unless-stopped
-    labels:
-      - "zone=ot"
-      - "component=slave-plc"
-      - "segment=south"
     depends_on:
       - master-plc
 
   # ============================================================================
-  # NETWORK COMPONENTS
+  # MONITORING (Lightweight)
   # ============================================================================
-  
-  router:
-    image: alpine:latest
-    container_name: railroad-router
-    hostname: router
-    networks:
-      ot-network:
-        ipv4_address: 172.25.0.1
-      dmz-network:
-        ipv4_address: 172.27.0.1
-    ports:
-      - "22:22"
-    volumes:
-      - ./network-config:/etc/network
-    command: /bin/sh -c "while true; do sleep 3600; done"
-    restart: unless-stopped
-    labels:
-      - "zone=ot"
-      - "component=router"
-
-  dmz-router:
-    image: alpine:latest
-    container_name: railroad-dmz-router
-    hostname: dmz-router
-    networks:
-      it-network:
-        ipv4_address: 172.26.0.1
-      dmz-network:
-        ipv4_address: 172.27.0.1
-    volumes:
-      - ./network-config:/etc/network
-    restart: unless-stopped
-    labels:
-      - "zone=dmz"
-      - "component=dmz-router"
-
-  # ============================================================================
-  # MONITORING LAYER
-  # ============================================================================
-  
-  ids:
-    image: zeek/zeek:latest
-    container_name: railroad-ids
-    hostname: ids
-    networks:
-      ot-network:
-        ipv4_address: 172.25.0.30
-    ports:
-      - "5901:5901"    # VNC
-    volumes:
-      - ./monitoring/zeek-rules.sig:/opt/zeek/etc/site.sig
-      - zeek-logs:/zeek/logs
-    environment:
-      - ZEEK_INSTALL_DIR=/opt/zeek
-    restart: unless-stopped
-    labels:
-      - "zone=ot"
-      - "component=ids"
 
   collector:
     image: python:3.11-slim
@@ -260,204 +142,34 @@ services:
       ot-network:
         ipv4_address: 172.25.0.40
     ports:
-      - "514:514/udp"   # Syslog
-      - "5000:5000/tcp" # TCP Syslog
+      - "5140:514/udp"
+      - "5000:5000/tcp"
     volumes:
       - ./monitoring:/app
-      - collector-logs:/logs
     environment:
       - PYTHONUNBUFFERED=1
       - SYSLOG_PORT=514
       - LISTEN_IP=0.0.0.0
     command: python /app/syslog_collector.py
     restart: unless-stopped
-    labels:
-      - "zone=ot"
-      - "component=collector"
 
-  dmz-collector:
-    image: python:3.11-slim
-    container_name: railroad-dmz-collector
-    hostname: dmz-collector
-    networks:
-      dmz-network:
-        ipv4_address: 172.27.0.40
-    ports:
-      - "514:514/udp"   # Syslog
-      - "5000:5000/tcp" # TCP Syslog
-    volumes:
-      - ./monitoring:/app
-      - dmz-collector-logs:/logs
-    environment:
-      - PYTHONUNBUFFERED=1
-      - SYSLOG_PORT=514
-      - LISTEN_IP=0.0.0.0
-    restart: unless-stopped
-    labels:
-      - "zone=dmz"
-      - "component=dmz-collector"
-
-  dmz-transfer:
-    image: python:3.11-slim
-    container_name: railroad-dmz-transfer
-    hostname: dmz-transfer
-    networks:
-      it-network:
-        ipv4_address: 172.26.0.30
-      dmz-network:
-        ipv4_address: 172.27.0.30
-    ports:
-      - "8081:8081"    # HTTPS
-      - "22:22"        # SFTP
-    volumes:
-      - ./monitoring:/app
-      - dmz-transfer-data:/data
-    environment:
-      - PYTHONUNBUFFERED=1
-      - LISTEN_PORT=8081
-    restart: unless-stopped
-    labels:
-      - "zone=dmz"
-      - "component=dmz-transfer"
-
-  dmz-pentest:
-    image: ubuntu:22.04
-    container_name: railroad-dmz-pentest
-    hostname: dmz-pentest
-    networks:
-      it-network:
-        ipv4_address: 172.26.0.20
-      dmz-network:
-        ipv4_address: 172.27.0.20
-    ports:
-      - "8083:8080"    # Web interface
-    volumes:
-      - ./scripts:/app
-    environment:
-      - PYTHONUNBUFFERED=1
-    command: /bin/bash -c "apt-get update && apt-get install -y python3 python3-pip curl telnet && python3 /app/pentest-fury.py"
-    restart: unless-stopped
-    labels:
-      - "zone=dmz"
-      - "component=pentest"
+  # ============================================================================
+  # PENTEST TOOLS
+  # ============================================================================
 
   pentest:
-    image: ubuntu:22.04
+    image: python:3.11-slim
     container_name: railroad-pentest
     hostname: pentest
     networks:
       ot-network:
         ipv4_address: 172.25.0.60
-    ports:
-      - "8084:8080"
     volumes:
       - ./scripts:/app
-      - pentest-data:/data
     environment:
       - PYTHONUNBUFFERED=1
-    command: /bin/bash -c "apt-get update && apt-get install -y python3 python3-pip curl telnet nmap && python3 /app/pentest-fury.py"
+    command: bash -c "pip install --quiet requests pymodbus && echo 'OT Pentest Ready' && while true; do sleep 3600; done"
     restart: unless-stopped
-    labels:
-      - "zone=ot"
-      - "component=pentest"
-
-  # ============================================================================
-  # ELASTICSEARCH & KIBANA
-  # ============================================================================
-  
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.0.0
-    container_name: railroad-elasticsearch
-    hostname: elasticsearch
-    networks:
-      ot-network:
-        ipv4_address: 172.25.0.50
-    ports:
-      - "9200:9200"
-      - "9300:9300"
-    environment:
-      - discovery.type=single-node
-      - xpack.security.enabled=false
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-    volumes:
-      - elasticsearch-data:/usr/share/elasticsearch/data
-      - ./monitoring/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
-    restart: unless-stopped
-    healthcheck:
-      test: curl -s http://localhost:9200 >/dev/null || exit 1
-      interval: 30s
-      timeout: 10s
-      retries: 5
-    labels:
-      - "zone=ot"
-      - "component=elasticsearch"
-
-  kibana:
-    image: docker.elastic.co/kibana/kibana:8.0.0
-    container_name: railroad-kibana
-    hostname: kibana
-    networks:
-      ot-network:
-        ipv4_address: 172.25.0.51
-    ports:
-      - "5601:5601"
-    environment:
-      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
-      - ELASTICSEARCH_USERNAME=elastic
-      - ELASTICSEARCH_PASSWORD=changeme
-    volumes:
-      - ./monitoring/kibana-dashboards.json:/usr/share/kibana/dashboards.json
-    depends_on:
-      - elasticsearch
-    restart: unless-stopped
-    healthcheck:
-      test: curl -s http://localhost:5601/api/status >/dev/null || exit 1
-      interval: 30s
-      timeout: 10s
-      retries: 5
-    labels:
-      - "zone=ot"
-      - "component=kibana"
-
-  # ============================================================================
-  # LOGSTASH (Log Processing)
-  # ============================================================================
-  
-  logstash:
-    image: docker.elastic.co/logstash/logstash:8.0.0
-    container_name: railroad-logstash
-    hostname: logstash
-    networks:
-      ot-network:
-        ipv4_address: 172.25.0.52
-    ports:
-      - "5000:5000/tcp"
-      - "5001:5001/udp"
-      - "9600:9600"
-    volumes:
-      - ./monitoring/logstash.conf:/usr/share/logstash/pipeline/logstash.conf
-    environment:
-      - ELASTICSEARCH_HOSTS=elasticsearch:9200
-    depends_on:
-      - elasticsearch
-    restart: unless-stopped
-    labels:
-      - "zone=ot"
-      - "component=logstash"
-
-volumes:
-  ews-data:
-  scada-data:
-  master-plc-data:
-  slave-plc-1-data:
-  slave-plc-2-data:
-  slave-plc-3-data:
-  zeek-logs:
-  collector-logs:
-  dmz-collector-logs:
-  dmz-transfer-data:
-  pentest-data:
-  elasticsearch-data:
 
 networks:
   it-network:
@@ -466,14 +178,12 @@ networks:
       config:
         - subnet: 172.26.0.0/16
           gateway: 172.26.0.254
-  
   dmz-network:
     driver: bridge
     ipam:
       config:
         - subnet: 172.27.0.0/16
           gateway: 172.27.0.254
-  
   ot-network:
     driver: bridge
     ipam:

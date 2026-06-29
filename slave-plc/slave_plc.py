@@ -70,8 +70,9 @@ class SlavePLC:
         logger.info(f"Slave PLC {self.slave_id} ({self.segment_name}) initialized")
     
     def _load_config(self) -> Dict:
+        config_path = os.environ.get('SEGMENT_CONFIG', '/app/config/segment.json')
         try:
-            with open('/app/config/segment.json') as f:
+            with open(config_path) as f:
                 return json.load(f)
         except Exception:
             logger.warning("Segment config not found, using defaults")
