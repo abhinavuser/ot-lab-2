@@ -86,156 +86,172 @@ HTML_TEMPLATE = '''
 <head>
     <title>Railroad North - SCADA Control Center</title>
     <style>
+        :root {
+            --bg-dark: #0f172a;
+            --bg-panel: #1e293b;
+            --accent: #38bdf8;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+        }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: 'Courier New', monospace;
-            background: linear-gradient(135deg, #0a0f0d 0%, #1a2a1f 50%, #0d1a14 100%);
-            color: #00ff41;
-            padding: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            padding: 25px;
             min-height: 100vh;
         }
         .header {
-            background: rgba(0,0,0,0.8);
-            border: 2px solid #00ff41;
-            padding: 20px;
-            margin-bottom: 20px;
-            text-align: center;
-            box-shadow: 0 0 20px rgba(0,255,65,0.3), inset 0 0 20px rgba(0,255,65,0.05);
-        }
-        .header h1 { font-size: 28px; letter-spacing: 4px; text-shadow: 0 0 10px #00ff41; }
-        .header p { color: #00cc33; margin-top: 5px; font-size: 12px; }
-        .status-bar {
-            background: rgba(0,20,10,0.9);
-            border: 1px solid #00ff41;
-            padding: 12px 20px;
-            margin-bottom: 20px;
+            background-color: var(--bg-panel);
+            border-top: 4px solid var(--accent);
+            padding: 20px 30px;
+            margin-bottom: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-size: 13px;
         }
-        .status-bar .indicator { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
-        .indicator.online { background: #00ff41; box-shadow: 0 0 6px #00ff41; }
-        .indicator.offline { background: #ff0040; box-shadow: 0 0 6px #ff0040; }
-        .container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+        .header h1 { font-size: 24px; font-weight: 600; color: var(--text-main); }
+        .header p { color: var(--text-muted); font-size: 14px; margin-top: 4px; }
+        .status-bar {
+            background-color: var(--bg-panel);
+            padding: 15px 25px;
+            margin-bottom: 25px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+        .status-bar .indicator { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; }
+        .indicator.online { background: var(--success); box-shadow: 0 0 8px var(--success); }
+        .indicator.offline { background: var(--danger); box-shadow: 0 0 8px var(--danger); }
+        
+        .container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+        
         .segment {
-            background: rgba(0,20,10,0.85);
-            border: 2px solid #00ff41;
-            padding: 20px;
-            border-radius: 4px;
-            box-shadow: 0 0 15px rgba(0,255,65,0.15);
-            transition: box-shadow 0.3s;
+            background-color: var(--bg-panel);
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.05);
         }
-        .segment:hover { box-shadow: 0 0 25px rgba(0,255,65,0.3); }
-        .segment h3 { margin-bottom: 15px; color: #ffff00; font-size: 16px; text-shadow: 0 0 5px rgba(255,255,0,0.3); }
+        .segment h3 { margin-bottom: 20px; color: var(--accent); font-size: 18px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; }
         .segment-status {
-            background: rgba(0,0,0,0.5);
-            padding: 12px;
-            margin-bottom: 12px;
-            border-left: 3px solid #00ff41;
-            font-size: 13px;
-            line-height: 1.8;
+            background: rgba(0,0,0,0.2);
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            line-height: 2.0;
+            color: var(--text-muted);
         }
-        .control-buttons { display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
+        .control-buttons { display: flex; flex-direction: column; gap: 10px; }
+        
         button {
-            background: rgba(0,40,20,0.8);
-            color: #00ff41;
-            border: 1px solid #00ff41;
-            padding: 8px 16px;
+            background-color: #2563eb;
+            color: #ffffff;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
             cursor: pointer;
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-            transition: all 0.3s;
-            letter-spacing: 1px;
+            font-size: 13px;
+            font-weight: 600;
+            transition: background-color 0.2s;
         }
-        button:hover { background: #00ff41; color: #000; box-shadow: 0 0 10px rgba(0,255,65,0.5); }
-        button:active { transform: scale(0.95); }
-        button.emergency { border-color: #ff0040; color: #ff0040; }
-        button.emergency:hover { background: #ff0040; color: #fff; }
-        .log-panel {
-            grid-column: 1 / -1;
-            background: rgba(0,0,0,0.85);
-            border: 2px solid #00ff41;
-            padding: 20px;
-            max-height: 300px;
-            overflow-y: auto;
-            font-size: 12px;
-        }
-        .log-panel h3 { margin-bottom: 10px; color: #00ff41; }
-        .log-entry { margin: 4px 0; padding: 4px 10px; border-left: 2px solid #00ff41; }
-        .success { color: #00ff41; }
-        .error { color: #ff0040; }
-        .warning { color: #ffff00; }
-        .info { color: #00ccff; }
-        .safety-panel {
-            grid-column: 1 / -1;
-            background: rgba(0,20,10,0.85);
-            border: 2px solid #00cc33;
-            padding: 20px;
-        }
-        .safety-panel h3 { color: #00cc33; margin-bottom: 10px; }
-        .interlock { padding: 6px 0; border-bottom: 1px solid rgba(0,255,65,0.2); font-size: 12px; }
+        button:hover { background-color: #1d4ed8; }
+        button:active { transform: translateY(1px); }
+        
+        button.emergency { background-color: var(--danger); }
+        button.emergency:hover { background-color: #dc2626; }
+        button.clear { background-color: #475569; }
+        button.clear:hover { background-color: #334155; }
+        
+        .panel-bottom { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 5px; }
+        .panel { background-color: var(--bg-panel); padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
+        .panel h3 { color: var(--text-main); font-size: 16px; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; }
+        
+        .log-panel { max-height: 250px; overflow-y: auto; font-family: monospace; font-size: 13px; }
+        .log-entry { margin: 6px 0; padding: 8px 12px; background: rgba(0,0,0,0.2); border-radius: 4px; border-left: 3px solid var(--accent); }
+        
+        .success { color: var(--success); font-weight: 600;}
+        .error { color: var(--danger); font-weight: 600;}
+        .warning { color: var(--warning); font-weight: 600;}
+        .info { color: var(--accent); font-weight: 600;}
+        
+        .interlock { padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 14px; color: var(--text-muted); }
         .interlock:last-child { border: none; }
-        .active-badge { color: #00ff41; font-weight: bold; }
+        .active-badge { color: var(--success); font-weight: bold; background: rgba(16,185,129,0.1); padding: 2px 8px; border-radius: 12px; font-size: 12px; }
+        
         @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
         .pulse { animation: pulse 2s infinite; }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>&#x1F682; RAILROAD NORTH</h1>
-        <p>Central SCADA Control Center &mdash; Master-Slave PLC Architecture</p>
+        <div>
+            <h1>RAILROAD NORTH</h1>
+            <p>Central SCADA Control Center | Master-Slave PLC Architecture</p>
+        </div>
+        <div style="text-align: right;">
+            <button class="emergency" onclick="emergencyStop()">E-STOP / HALT ALL</button>
+            <button class="clear" onclick="clearEmergency()">CLEAR FAULTS</button>
+        </div>
     </div>
     
     <div class="status-bar">
         <span><span class="indicator" id="master-indicator"></span>Master PLC: <span id="master-status">Connecting...</span></span>
         <span>System Time: <span id="system-time">--:--:--</span></span>
-        <span>Commands: <span id="command-count">0</span></span>
-        <span>
-            <button class="emergency" onclick="emergencyStop()">&#x26A0; E-STOP</button>
-            <button onclick="clearEmergency()">CLEAR</button>
-        </span>
+        <span>Commands Issued: <span id="command-count">0</span></span>
     </div>
     
     <div class="container">
         <div class="segment" id="segment-1">
-            <h3>&#x1F682; Segment 1: North (Entrance)</h3>
+            <h3>Segment 1: North (Entrance)</h3>
             <div class="segment-status"><div id="seg1-status">Loading...</div></div>
             <div class="control-buttons">
                 <button onclick="sendCommand(1, 'ROUTE_A')">Route A (Express)</button>
                 <button onclick="sendCommand(1, 'ROUTE_B')">Route B (Local)</button>
-                <button onclick="sendCommand(1, 'ROUTE_C')">Route C (Maint)</button>
+                <button onclick="sendCommand(1, 'ROUTE_C')">Route C (Maintenance)</button>
             </div>
         </div>
         
         <div class="segment" id="segment-2">
-            <h3>&#x1F684; Segment 2: Central (Junction)</h3>
+            <h3>Segment 2: Central (Junction)</h3>
             <div class="segment-status"><div id="seg2-status">Loading...</div></div>
             <div class="control-buttons">
                 <button onclick="sendCommand(2, 'ROUTE_A')">Route A (Express)</button>
                 <button onclick="sendCommand(2, 'ROUTE_B')">Route B (Local)</button>
-                <button onclick="sendCommand(2, 'ROUTE_C')">Route C (Maint)</button>
+                <button onclick="sendCommand(2, 'ROUTE_C')">Route C (Maintenance)</button>
             </div>
         </div>
         
         <div class="segment" id="segment-3">
-            <h3>&#x1F683; Segment 3: South (Yard)</h3>
+            <h3>Segment 3: South (Yard)</h3>
             <div class="segment-status"><div id="seg3-status">Loading...</div></div>
             <div class="control-buttons">
                 <button onclick="sendCommand(3, 'ROUTE_A')">Route A (Express)</button>
                 <button onclick="sendCommand(3, 'ROUTE_B')">Route B (Local)</button>
-                <button onclick="sendCommand(3, 'ROUTE_C')">Route C (Maint)</button>
+                <button onclick="sendCommand(3, 'ROUTE_C')">Route C (Maintenance)</button>
             </div>
         </div>
         
-        <div class="safety-panel">
-            <h3>&#x1F6E1; Safety Interlocks</h3>
-            <div id="safety-content">Loading...</div>
-        </div>
-        
-        <div class="log-panel">
-            <h3>&#x1F4CB; Command Log</h3>
-            <div id="log-content"></div>
+        <div class="panel-bottom">
+            <div class="panel">
+                <h3>Safety Interlocks</h3>
+                <div id="safety-content" style="color: var(--text-muted); font-size: 14px;">Loading...</div>
+            </div>
+            
+            <div class="panel log-panel">
+                <h3>Command Audit Log</h3>
+                <div id="log-content"></div>
+            </div>
         </div>
     </div>
     
