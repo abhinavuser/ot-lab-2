@@ -2,141 +2,303 @@
 marp: true
 theme: default
 class: lead
-backgroundColor: #1a1a2e
-color: #e2e8f0
+size: 16:9
 style: |
-  h1, h2, h3, h4, h5, h6 { color: #38bdf8; }
-  a { color: #f472b6; }
-  section { font-family: 'Inter', sans-serif; }
-  .box { padding: 20px; background: rgba(255,255,255,0.05); border-radius: 10px; border-left: 4px solid #38bdf8; margin-top: 20px;}
-  code { background: #0f172a; color: #a78bfa; border-radius: 4px; padding: 2px 5px;}
+  :root {
+    --primary: #2563eb;
+    --secondary: #0f172a;
+    --accent: #38bdf8;
+    --danger: #ef4444;
+    --success: #22c55e;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+  }
+  section { 
+    background-color: var(--secondary);
+    color: var(--text-main);
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+    padding: 60px 80px;
+  }
+  h1 { font-size: 3.5em; color: var(--accent); margin-bottom: 0.2em; font-weight: 800; }
+  h2 { font-size: 2.2em; color: var(--text-main); border-bottom: 2px solid var(--primary); padding-bottom: 10px; margin-bottom: 30px; }
+  h3 { color: var(--accent); font-size: 1.5em; }
+  p, li { font-size: 1.2em; line-height: 1.6; color: var(--text-muted); }
+  strong { color: #fff; font-weight: 600; }
+  
+  .card {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 25px;
+    margin: 15px 0;
+    border-left: 5px solid var(--accent);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  }
+  .card-danger { border-left-color: var(--danger); }
+  .card-success { border-left-color: var(--success); }
+  
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+  }
+  
+  table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 1.1em; }
+  th { background-color: var(--primary); color: white; padding: 15px; text-align: left; }
+  td { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); color: var(--text-muted); }
+  tr:nth-child(even) { background-color: rgba(255,255,255,0.02); }
+  
+  .highlight { color: var(--accent); font-weight: bold; }
+  .alert { color: var(--danger); font-weight: bold; }
+  
+  code { background: #1e293b; color: #a78bfa; padding: 4px 8px; border-radius: 6px; font-size: 0.9em; }
 ---
 
 # Railroad North
-## OT Security Training Lab
-Lab Overview and Scenarios
+## Applied OT & ICS Security Training
+Presented to Engineering & Cyber Security Students
 
 ---
 
-## Lab Objectives
+## What is Operational Technology (OT)?
 
-This lab is designed to give you hands-on experience with industrial control systems and how to defend them. 
+Unlike traditional IT networks that manage **data**, OT networks manage **physical processes**. 
 
-By the end of this session, you should be able to:
-1. Understand the basic architecture of a Master-Slave PLC setup using Modbus TCP.
-2. Monitor and analyze OT network traffic.
-3. Use tools like Zeek and ELK to detect abnormal behavior.
-4. Respond to simulated attacks in a controlled environment.
-
----
-
-## Network Architecture
-
-We are using a standard three-tier model for this setup:
-
-- **IT Network (172.26.0.0/16)**: Used for engineering workstations and basic file transfers.
-- **DMZ Network (172.27.0.0/16)**: Hosts the SCADA Web UI and syslog aggregators.
-- **OT Network (172.25.0.0/16)**: The core network containing the Master PLC, Slave PLCs, Modbus traffic, and the monitoring stack.
-
----
-
-## Core Components
-
-<div class="box">
-<strong>Master PLC</strong>
-Acts as the central controller. It enforces safety rules, validates routes, and continuously polls the Slave PLCs.
-</div>
-
-<div class="box">
-<strong>Slave PLCs (North, Central, South)</strong>
-These control the actual track segments. They operate the switches, signals, and barriers, and report back to the Master.
-</div>
-
-<div class="box">
-<strong>SCADA Dashboard</strong>
-The web interface used by operators to monitor track status and send routing commands.
+<div class="grid">
+  <div>
+    <h3>Traditional IT (Information Tech)</h3>
+    <ul>
+      <li><strong>Priority:</strong> Confidentiality & Data Protection</li>
+      <li><strong>Impact:</strong> Data breaches, financial loss</li>
+      <li><strong>Lifespan:</strong> Hardware replaced every 3-5 years</li>
+      <li><strong>Patching:</strong> Regular, automated updates</li>
+    </ul>
+  </div>
+  <div>
+    <h3>OT (Operational Tech)</h3>
+    <ul>
+      <li><strong>Priority:</strong> <span class="highlight">Safety, Availability, Reliability</span></li>
+      <li><strong>Impact:</strong> Physical damage, loss of human life</li>
+      <li><strong>Lifespan:</strong> Equipment runs for 15-30 years</li>
+      <li><strong>Patching:</strong> Extremely rare; requires system downtime</li>
+    </ul>
+  </div>
 </div>
 
 ---
 
-## Safety Mechanisms
+## Introduction to the Railroad North Lab
 
-The system has physical safety logic built in to prevent accidents:
+This laboratory simulates a **Critical Infrastructure Railway System**. It is designed to safely teach you how these systems work and how they can be compromised.
 
-1. **Track Occupancy Lock**: A track switch will not operate if a train is currently on that segment.
-2. **Barrier Enforcement**: Routes cannot be changed if the physical barriers are not in the correct lowered state.
-3. **Heartbeat Monitoring**: The Master polls the Slaves every 5 seconds. If communication fails, the system safely halts and enters a FAULT state.
+<div class="card">
+  <strong>The Core Mission</strong>
+  You will step into the shoes of both an attacker and a defender. You will learn how to read industrial protocols, bypass physical safety interlocks, and finally, how to detect and stop these attacks using modern SOC (Security Operations Center) tools.
+</div>
 
 ---
 
-## Monitoring Setup
+## The Purdue Enterprise Reference Architecture
 
-To monitor the OT network, we have integrated a basic SOC stack:
+Our lab is segmented strictly according to the industry-standard Purdue Model.
 
-- **Syslog Collector**: Gathers logs from all components.
-- **Zeek IDS**: Inspects network traffic on port 502. We added custom signatures to catch Modbus anomalies.
-- **Elasticsearch & Logstash**: Parses the logs and indexes them.
-- **Kibana**: Provides dashboards to visualize the data and alerts.
+<table>
+  <tr>
+    <th>Zone</th>
+    <th>Level</th>
+    <th>Components in our Lab</th>
+  </tr>
+  <tr>
+    <td><strong>IT / Enterprise</strong></td>
+    <td>Level 4</td>
+    <td>Engineering Workstations, Corporate File Transfers (Subnet: 172.26.x.x)</td>
+  </tr>
+  <tr>
+    <td><strong>DMZ (Demilitarized)</strong></td>
+    <td>Level 3.5</td>
+    <td>SCADA Web Dashboard, Syslog Aggregator, Secure Proxies (Subnet: 172.27.x.x)</td>
+  </tr>
+  <tr>
+    <td><strong>OT / Control</strong></td>
+    <td>Level 1-3</td>
+    <td>Master PLC, Zeek IDS, ELK Stack (Subnet: 172.25.x.x)</td>
+  </tr>
+  <tr>
+    <td><strong>Field Devices</strong></td>
+    <td>Level 0</td>
+    <td>Slave PLCs controlling Switches, Barriers, and Signals</td>
+  </tr>
+</table>
+
+---
+
+## Deep Dive: How the Railway is Controlled
+
+To secure the railway, you must first understand how it operates.
+
+<div class="grid">
+  <div>
+    <div class="card">
+      <h3>1. The Master PLC (The Brain)</h3>
+      <p>The Master Programmable Logic Controller acts as the central coordinator. It stores the "global truth" of the railway. It continuously polls the Slave PLCs every 5 seconds (Heartbeat) and enforces safety rules.</p>
+    </div>
+  </div>
+  <div>
+    <div class="card">
+      <h3>2. The Slave PLCs (The Muscle)</h3>
+      <p>Located in the North, Central, and South segments. These directly open/close physical track switches and lower barriers. They blindly follow the Master's orders.</p>
+    </div>
+  </div>
+</div>
+
+---
+
+## Modbus TCP: The Language of Industry
+
+Our PLCs communicate using **Modbus TCP**, a protocol from 1979 that is still used globally today.
+
+<div class="card card-danger">
+  <strong>The Security Flaw:</strong> Modbus TCP has zero encryption and zero authentication. If you can reach the network port (502), the PLC will execute your command.
+</div>
+
+**Key Modbus Functions You Will See:**
+- `Function 0x03 (Read Holding Registers)`: Used by the Master to check sensor states.
+- `Function 0x06 (Write Single Register)`: Used by the SCADA UI to change a track route.
+- `Function 0x0F (Write Multiple Coils)`: Used to trigger emergency stops.
+
+---
+
+## Built-In Safety Interlocks (Defensive Logic)
+
+To prevent catastrophic train derailments, our Master PLC has hard-coded safety logic:
+
+1. **Track Occupancy Lock:** A track switch <span class="alert">will not operate</span> if the occupancy sensor detects a train currently on that specific segment.
+2. **Barrier Enforcement:** Train routes cannot be cleared unless physical crossing barriers are confirmed to be lowered and locked.
+3. **Heartbeat Monitoring:** If the Master PLC loses connection to a Slave PLC, it triggers a global `FAULT` state, halting all trains.
+
+---
+
+## The Defender's Toolkit (SOC Stack)
+
+Because Modbus is insecure by design, we must rely on **network monitoring** to secure the OT environment.
+
+<div class="grid">
+  <div>
+    <ul>
+      <li><strong>Zeek IDS:</strong> An Intrusion Detection System. It performs Deep Packet Inspection (DPI) on port 502 to alert us to malformed Modbus traffic or unauthorized writes.</li>
+      <li><strong>Syslog Collector:</strong> Aggregates every command and error from the PLCs into a central server.</li>
+    </ul>
+  </div>
+  <div>
+    <ul>
+      <li><strong>Elasticsearch & Logstash:</strong> Ingests millions of log events and indexes them for rapid searching.</li>
+      <li><strong>Kibana:</strong> Our visual dashboard. Used by analysts to spot anomalies (like a sudden spike in Modbus traffic).</li>
+    </ul>
+  </div>
+</div>
 
 ---
 
 ## Training Scenarios
 
-We will go through 4 specific attack scenarios today.
+You will now execute and defend against four distinct cyber-physical attacks.
 
 ---
 
 ### Scenario 1: Unauthorized Track Switching
 
-**Goal**: Detect route change commands sent from an unauthorized IP.
-**Attack**: An attacker bypasses the SCADA interface and sends a direct Modbus write command to the Master PLC.
-**Defense**: 
-- Find the unauthorized IP in the Kibana logs.
-- Check the Zeek notice.log for any triggered signatures.
-- Discuss how firewall rules could prevent this.
+**The Concept:** An adversary gains access to the OT network and attempts to switch a track route, bypassing the SCADA operator dashboard.
+
+<div class="grid">
+  <div>
+    <div class="card card-danger">
+      <h3>The Attack</h3>
+      <p>The student will use a script to send a direct Modbus <code>Write Register (0x06)</code> command to the Master PLC from an unauthorized IP address.</p>
+    </div>
+  </div>
+  <div>
+    <div class="card card-success">
+      <h3>The Defense</h3>
+      <p>Identify the rogue IP address using the Kibana dashboard. Review the Zeek <code>notice.log</code> to see exactly which register was modified, and propose firewall segmentation rules.</p>
+    </div>
+  </div>
+</div>
 
 ---
 
-### Scenario 2: PLC Heartbeat Failure
+### Scenario 2: PLC Heartbeat Failure (DoS)
 
-**Goal**: Handle a Denial of Service (DoS) situation against a segment controller.
-**Attack**: One of the Slave PLCs is taken offline to simulate a failure or isolation.
-**Defense**:
-- Watch the Master PLC transition into the FAULT state.
-- Locate the missing heartbeat logs in ELK.
-- Walk through the standard E-STOP (Emergency Stop) recovery procedure.
+**The Concept:** A segment of the railway loses connectivity due to a cyber-attack (DoS) or a physical network cut.
+
+<div class="grid">
+  <div>
+    <div class="card card-danger">
+      <h3>The Attack</h3>
+      <p>We will intentionally isolate a Slave PLC, severing its connection to the Master controller.</p>
+    </div>
+  </div>
+  <div>
+    <div class="card card-success">
+      <h3>The Defense</h3>
+      <p>Watch the Master PLC automatically trigger the safety interlock and enter a <code>FAULT</code> state. Students will use the logs to determine the exact timestamp of the network loss and execute the standard E-STOP recovery procedure.</p>
+    </div>
+  </div>
+</div>
 
 ---
 
 ### Scenario 3: Safety Interlock Bypass
 
-**Goal**: See what happens when sensor data is manipulated.
-**Attack**: An attacker forces the Occupancy Sensor state on a Slave PLC to change while a train is present, attempting to switch the track.
-**Defense**:
-- Analyze the logs to find conflicting sensor states.
-- Discuss how to write custom Zeek rules to alert on impossible state changes.
+**The Concept:** What happens if an attacker manipulates the sensor data that the safety logic relies on?
+
+<div class="grid">
+  <div>
+    <div class="card card-danger">
+      <h3>The Attack</h3>
+      <p>The attacker forces the "Occupancy Sensor" value on a Slave PLC to <code>False</code> (Clear), tricking the Master PLC into allowing a track switch while a train is actually present.</p>
+    </div>
+  </div>
+  <div>
+    <div class="card card-success">
+      <h3>The Defense</h3>
+      <p>This is the most dangerous scenario. Students will analyze the logs for impossible physics (e.g., a track clearing in 0.1 seconds) and learn to write custom Zeek rules to alert on rapid sensor-state toggling.</p>
+    </div>
+  </div>
+</div>
 
 ---
 
-### Scenario 4: Modbus Protocol Manipulation
+### Scenario 4: Modbus Protocol Fuzzing
 
-**Goal**: Detect reconnaissance and malformed Modbus traffic.
-**Attack**: We will run a script that performs Modbus scanning and function-code fuzzing against the PLCs.
-**Defense**:
-- Identify the scanning patterns in the network traffic.
-- Detect the invalid function codes being dropped by the PLCs.
+**The Concept:** Attackers often map out a network before striking. We must detect them during the reconnaissance phase.
+
+<div class="grid">
+  <div>
+    <div class="card card-danger">
+      <h3>The Attack</h3>
+      <p>Students will use the <code>modbus-attack.py</code> toolkit to rapidly scan the PLC and send malformed function codes to map out the memory registers.</p>
+    </div>
+  </div>
+  <div>
+    <div class="card card-success">
+      <h3>The Defense</h3>
+      <p>Identify the automated scanning patterns in the network traffic. Detect the specific <code>Illegal Function</code> exception codes being dropped and logged by the PLCs.</p>
+    </div>
+  </div>
+</div>
 
 ---
 
-## Deployment Details
+## Lab Execution & Deliverables
 
-The lab runs on Docker. Depending on resources, we use two configurations:
+Your task is to work through these scenarios on your local lab instance. 
 
-- **Local Setup**: A lightweight 6-container setup (PLCs + SCADA) that runs well on standard laptops.
-- **Cloud Setup**: The full 17-container setup, which includes the entire ELK stack and Zeek IDS, hosted on AWS.
+1. **Access the Dashboard:** Go to <code>http://localhost:8080</code> to view the SCADA system.
+2. **Review the Logs:** Analyze the output of the Master PLC and the Syslog collector.
+3. **Document Findings:** For each scenario, document the Attack Vector, the resulting System Impact, and the Defensive Mitigation.
 
 ---
 
-# Questions?
+# Questions & Lab Kickoff
 
-Let's get started with Scenario 1.
+### Please navigate to your local lab instance to begin.
+*The TA will be walking around to assist with networking or Docker issues.*
