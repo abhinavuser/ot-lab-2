@@ -87,133 +87,140 @@ HTML_TEMPLATE = '''
     <title>Railroad North - SCADA Control Center</title>
     <style>
         :root {
-            --bg-dark: #0f172a;
-            --bg-panel: #1e293b;
-            --accent: #38bdf8;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --success: #10b981;
+            --bg-dark: #000000;
+            --bg-panel: #0a0a0a;
+            --border: #222222;
+            --border-hover: #555555;
+            --text-main: #e5e5e5;
+            --text-muted: #888888;
+            --success: #22c55e;
             --danger: #ef4444;
-            --warning: #f59e0b;
+            --warning: #eab308;
+            --accent: #ffffff;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             background-color: var(--bg-dark);
             color: var(--text-main);
-            padding: 25px;
+            padding: 40px;
             min-height: 100vh;
+            line-height: 1.5;
         }
-        .header {
-            background-color: var(--bg-panel);
-            border-top: 4px solid var(--accent);
-            padding: 20px 30px;
-            margin-bottom: 25px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .header h1 { font-size: 24px; font-weight: 600; color: var(--text-main); }
-        .header p { color: var(--text-muted); font-size: 14px; margin-top: 4px; }
-        .status-bar {
-            background-color: var(--bg-panel);
-            padding: 15px 25px;
-            margin-bottom: 25px;
-            border-radius: 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 14px;
-            font-weight: 500;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-        }
-        .status-bar .indicator { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; }
-        .indicator.online { background: var(--success); box-shadow: 0 0 8px var(--success); }
-        .indicator.offline { background: var(--danger); box-shadow: 0 0 8px var(--danger); }
         
-        .container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+        .header {
+            margin-bottom: 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+        .header h1 { font-size: 24px; font-weight: 400; letter-spacing: 1px; }
+        .header p { color: var(--text-muted); font-size: 13px; margin-top: 5px; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .status-bar {
+            display: flex;
+            gap: 40px;
+            margin-bottom: 40px;
+            font-size: 13px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .status-bar span span { color: var(--text-main); margin-left: 5px; }
+        .indicator { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+        .indicator.online { background: var(--success); }
+        .indicator.offline { background: var(--danger); }
+        
+        .container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; }
         
         .segment {
-            background-color: var(--bg-panel);
-            padding: 25px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-            border: 1px solid rgba(255,255,255,0.05);
+            background-color: var(--bg-dark);
+            padding: 30px;
+            border: 1px solid var(--border);
         }
-        .segment h3 { margin-bottom: 20px; color: var(--accent); font-size: 18px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; }
+        .segment h3 { margin-bottom: 25px; font-size: 14px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); }
+        
         .segment-status {
-            background: rgba(0,0,0,0.2);
-            padding: 15px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-            font-size: 14px;
-            line-height: 2.0;
-            color: var(--text-muted);
+            margin-bottom: 30px;
+            font-size: 13px;
+            font-family: 'JetBrains Mono', 'Courier New', monospace;
         }
-        .control-buttons { display: flex; flex-direction: column; gap: 10px; }
+        .segment-status div { line-height: 2.2; }
+        
+        .control-buttons { display: flex; flex-direction: column; gap: 8px; }
         
         button {
-            background-color: #2563eb;
-            color: #ffffff;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 6px;
+            background-color: transparent;
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+            padding: 12px 15px;
             cursor: pointer;
-            font-size: 13px;
-            font-weight: 600;
-            transition: background-color 0.2s;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.2s ease;
+            text-align: left;
         }
-        button:hover { background-color: #1d4ed8; }
-        button:active { transform: translateY(1px); }
+        button:hover { 
+            border-color: var(--text-main); 
+            color: var(--text-main);
+            padding-left: 20px;
+        }
         
-        button.emergency { background-color: var(--danger); }
-        button.emergency:hover { background-color: #dc2626; }
-        button.clear { background-color: #475569; }
-        button.clear:hover { background-color: #334155; }
+        .header-actions { display: flex; gap: 10px; }
+        button.emergency { color: #ff6b6b; border-color: #4a1d1d; }
+        button.emergency:hover { background-color: #ff6b6b; color: #000; border-color: #ff6b6b; padding-left: 15px; }
+        button.clear { border-color: var(--border); }
+        button.clear:hover { background-color: var(--text-main); color: var(--bg-dark); padding-left: 15px; }
         
-        .panel-bottom { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 5px; }
-        .panel { background-color: var(--bg-panel); padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
-        .panel h3 { color: var(--text-main); font-size: 16px; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; }
+        .panel-bottom { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 10px; }
+        .panel { padding: 30px; border: 1px solid var(--border); }
+        .panel h3 { font-size: 14px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 25px; color: var(--text-muted); }
         
-        .log-panel { max-height: 250px; overflow-y: auto; font-family: monospace; font-size: 13px; }
-        .log-entry { margin: 6px 0; padding: 8px 12px; background: rgba(0,0,0,0.2); border-radius: 4px; border-left: 3px solid var(--accent); }
+        .log-panel { max-height: 250px; overflow-y: auto; }
+        .log-entry { margin: 8px 0; font-family: 'JetBrains Mono', 'Courier New', monospace; font-size: 12px; color: var(--text-muted); }
         
-        .success { color: var(--success); font-weight: 600;}
-        .error { color: var(--danger); font-weight: 600;}
-        .warning { color: var(--warning); font-weight: 600;}
-        .info { color: var(--accent); font-weight: 600;}
+        .success { color: var(--success); }
+        .error { color: var(--danger); }
+        .warning { color: var(--warning); }
+        .info { color: var(--text-main); }
         
-        .interlock { padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 14px; color: var(--text-muted); }
+        .interlock { padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--text-main); }
         .interlock:last-child { border: none; }
-        .active-badge { color: var(--success); font-weight: bold; background: rgba(16,185,129,0.1); padding: 2px 8px; border-radius: 12px; font-size: 12px; }
+        .active-badge { float: right; color: var(--success); font-family: 'JetBrains Mono', monospace; font-size: 11px; }
         
-        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
-        .pulse { animation: pulse 2s infinite; }
+        @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+        .pulse { animation: blink 1s infinite; }
+        
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: var(--bg-dark); }
+        ::-webkit-scrollbar-thumb { background: var(--border); }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
     </style>
 </head>
 <body>
     <div class="header">
         <div>
             <h1>RAILROAD NORTH</h1>
-            <p>Central SCADA Control Center | Master-Slave PLC Architecture</p>
+            <p>Master-Slave PLC Architecture &mdash; System Control</p>
         </div>
-        <div style="text-align: right;">
-            <button class="emergency" onclick="emergencyStop()">E-STOP / HALT ALL</button>
-            <button class="clear" onclick="clearEmergency()">CLEAR FAULTS</button>
+        <div class="header-actions">
+            <button class="emergency" onclick="emergencyStop()">E-Stop</button>
+            <button class="clear" onclick="clearEmergency()">Clear Faults</button>
         </div>
     </div>
     
     <div class="status-bar">
-        <span><span class="indicator" id="master-indicator"></span>Master PLC: <span id="master-status">Connecting...</span></span>
-        <span>System Time: <span id="system-time">--:--:--</span></span>
-        <span>Commands Issued: <span id="command-count">0</span></span>
+        <div>Status <span id="master-status">Connecting...</span></div>
+        <div>System Time <span id="system-time">--:--:--</span></div>
+        <div>Commands Issued <span id="command-count">0</span></div>
     </div>
     
     <div class="container">
         <div class="segment" id="segment-1">
-            <h3>Segment 1: North (Entrance)</h3>
+            <h3>01 &mdash; North Entrance</h3>
             <div class="segment-status"><div id="seg1-status">Loading...</div></div>
             <div class="control-buttons">
                 <button onclick="sendCommand(1, 'ROUTE_A')">Route A (Express)</button>
@@ -223,7 +230,7 @@ HTML_TEMPLATE = '''
         </div>
         
         <div class="segment" id="segment-2">
-            <h3>Segment 2: Central (Junction)</h3>
+            <h3>02 &mdash; Central Junction</h3>
             <div class="segment-status"><div id="seg2-status">Loading...</div></div>
             <div class="control-buttons">
                 <button onclick="sendCommand(2, 'ROUTE_A')">Route A (Express)</button>
@@ -233,7 +240,7 @@ HTML_TEMPLATE = '''
         </div>
         
         <div class="segment" id="segment-3">
-            <h3>Segment 3: South (Yard)</h3>
+            <h3>03 &mdash; South Yard</h3>
             <div class="segment-status"><div id="seg3-status">Loading...</div></div>
             <div class="control-buttons">
                 <button onclick="sendCommand(3, 'ROUTE_A')">Route A (Express)</button>
@@ -245,11 +252,11 @@ HTML_TEMPLATE = '''
         <div class="panel-bottom">
             <div class="panel">
                 <h3>Safety Interlocks</h3>
-                <div id="safety-content" style="color: var(--text-muted); font-size: 14px;">Loading...</div>
+                <div id="safety-content" style="color: var(--text-muted); font-size: 13px;">Loading...</div>
             </div>
             
             <div class="panel log-panel">
-                <h3>Command Audit Log</h3>
+                <h3>System Audit Log</h3>
                 <div id="log-content"></div>
             </div>
         </div>
@@ -263,13 +270,10 @@ HTML_TEMPLATE = '''
                 const resp = await fetch('/api/overview');
                 const data = await resp.json();
                 
-                const ind = document.getElementById('master-indicator');
                 const ms = document.getElementById('master-status');
                 if (data.master_plc.error) {
-                    ind.className = 'indicator offline';
                     ms.innerHTML = '<span class="error">OFFLINE</span>';
                 } else {
-                    ind.className = 'indicator online';
                     ms.innerHTML = '<span class="success">ONLINE</span>';
                 }
                 
@@ -309,8 +313,8 @@ HTML_TEMPLATE = '''
                     }).join('');
                 }
             } catch (e) {
-                document.getElementById('master-indicator').className = 'indicator offline';
-                document.getElementById('master-status').innerHTML = '<span class="error pulse">CONNECTING...</span>';
+                const ms = document.getElementById('master-status');
+                if (ms) ms.innerHTML = '<span class="error pulse">CONNECTING...</span>';
             }
         }
         
@@ -341,7 +345,8 @@ HTML_TEMPLATE = '''
         }
         
         setInterval(() => {
-            document.getElementById('system-time').textContent = new Date().toLocaleTimeString();
+            const el = document.getElementById('system-time');
+            if (el) el.textContent = new Date().toLocaleTimeString();
         }, 1000);
         
         updateStatus();
