@@ -11,26 +11,27 @@ style: |
     --danger: #ef4444;
     --success: #22c55e;
     --text-main: #f8fafc;
-    --text-muted: #94a3b8;
+    --text-muted: #cbd5e1;
   }
   section { 
     background-color: var(--secondary);
     color: var(--text-main);
     font-family: 'Inter', 'Segoe UI', sans-serif;
-    padding: 60px 80px;
+    padding: 40px 60px;
+    font-size: 24px;
   }
-  h1 { font-size: 3.5em; color: var(--accent); margin-bottom: 0.2em; font-weight: 800; }
-  h2 { font-size: 2.2em; color: var(--text-main); border-bottom: 2px solid var(--primary); padding-bottom: 10px; margin-bottom: 30px; }
-  h3 { color: var(--accent); font-size: 1.5em; }
-  p, li { font-size: 1.2em; line-height: 1.6; color: var(--text-muted); }
+  h1 { font-size: 2.8em; color: var(--accent); margin-bottom: 0.2em; font-weight: 800; }
+  h2 { font-size: 1.6em; color: var(--text-main); border-bottom: 2px solid var(--primary); padding-bottom: 5px; margin-bottom: 20px; }
+  h3 { color: var(--accent); font-size: 1.2em; margin-bottom: 10px; margin-top: 0; }
+  p, li { font-size: 1.0em; line-height: 1.4; color: var(--text-muted); margin-bottom: 10px; }
   strong { color: #fff; font-weight: 600; }
   
   .card {
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 12px;
-    padding: 25px;
-    margin: 15px 0;
-    border-left: 5px solid var(--accent);
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 15px 20px;
+    margin: 10px 0;
+    border-left: 4px solid var(--accent);
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
   }
   .card-danger { border-left-color: var(--danger); }
@@ -39,18 +40,18 @@ style: |
   .grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 30px;
+    gap: 20px;
   }
   
-  table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 1.1em; }
-  th { background-color: var(--primary); color: white; padding: 15px; text-align: left; }
-  td { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); color: var(--text-muted); }
-  tr:nth-child(even) { background-color: rgba(255,255,255,0.02); }
+  table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9em; background-color: transparent !important; }
+  th { background-color: var(--primary) !important; color: white !important; padding: 12px; text-align: left; }
+  td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); color: var(--text-main) !important; background-color: var(--secondary) !important; }
+  tr:nth-child(even) td { background-color: #1e293b !important; }
   
   .highlight { color: var(--accent); font-weight: bold; }
   .alert { color: var(--danger); font-weight: bold; }
   
-  code { background: #1e293b; color: #a78bfa; padding: 4px 8px; border-radius: 6px; font-size: 0.9em; }
+  code { background: #1e293b; color: #a78bfa; padding: 2px 6px; border-radius: 4px; font-size: 0.85em; }
 ---
 
 # Railroad North
