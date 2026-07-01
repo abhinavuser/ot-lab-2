@@ -102,6 +102,26 @@ CHALLENGES = {
         "description": "Attempt to switch Segment 2 to ROUTE_A while Segment 1 is already on ROUTE_A. The safety interlock should block this. What is the exact 'reason' text returned in the rejected command?",
         "hint": "First set Segment 1 to ROUTE_A, then try Segment 2 to ROUTE_A. Check the API response for the rejection reason.",
         "flag": "Conflicting routes at junction"
+    },
+    "exploit-3": {
+        "id": "exploit-3",
+        "title": "API Fuzzing",
+        "category": "Exploitation",
+        "points": 400,
+        "difficulty": "Insane",
+        "description": "Fuzz the Master PLC API by sending a completely invalid route (e.g., 'ROUTE_XYZ'). The system will throw an exception. What is the exact error string returned by the API?",
+        "hint": "POST to /api/command with 'route': 'ROUTE_XYZ'. Read the 'error' field in the JSON response.",
+        "flag": "Invalid route: ROUTE_XYZ"
+    },
+    "forensics-3": {
+        "id": "forensics-3",
+        "title": "Deep Memory Forensics",
+        "category": "Forensics",
+        "points": 500,
+        "difficulty": "Insane",
+        "description": "A previous attacker left a hidden artifact in the Master PLC's memory during boot. Use curl to pull the full raw /api/status JSON and find the hidden flag string.",
+        "hint": "Look closely at the 'system_notes' or 'firmware_version' field in the raw JSON output.",
+        "flag": "FLAG{modbus_master_pwned}"
     }
 }
 
@@ -405,29 +425,49 @@ HTML_TEMPLATE = '''
         let solvedChallenges = JSON.parse(localStorage.getItem('ctf_solved') || '[]');
 
         async function loadChallenges() {
-            const resp = await fetch('/api/challenges');
-            const challenges = await resp.json();
+            try {
+                const resp = await fetch('/api/challenges');
+                const challenges = await resp.json();
+                window._challenges = challenges;
 
-            const grid = document.getElementById('challenges');
-            grid.innerHTML = challenges.map(ch => {
-                const solved = solvedChallenges.includes(ch.id);
-                return '<div class="challenge ' + (solved ? 'solved' : '') + '" id="ch-' + ch.id + '">' +
-                    '<div class="challenge-cat">' + ch.category + '</div>' +
-                    '<div class="meta">' +
-                        '<span class="points">' + ch.points + '</span>' +
-                        '<span class="difficulty ' + ch.difficulty + '">' + ch.difficulty + '</span>' +
-                    '</div>' +
-                    '<h3>' + ch.title + '</h3>' +
-                    '<p>' + ch.description + '</p>' +
-                    '<div class="flag-input">' +
-                        '<input type="text" id="flag-' + ch.id + '" placeholder="Enter flag...">' +
-                        '<button onclick="submitFlag(\'' + ch.id + '\')">Submit</button>' +
-                    '</div>' +
-                    '<div class="result-msg" id="result-' + ch.id + '"></div>' +
-                    '<button class="hint-btn" onclick="toggleHint(\'' + ch.id + '\')">Show Hint (-50 pts)</button>' +
-                    '<div class="hint" id="hint-' + ch.id + '">' + ch.hint + '</div>' +
-                '</div>';
-            }).join('');
+                const grid = document.getElementById('challenges');
+                let html = '';
+                for (let i = 0; i < challenges.length; i++) {
+                    const ch = challenges[i];
+                    const solved = solvedChallenges.includes(ch.id);
+                    const desc = ch.description.replace(/'/g, '&#39;');
+                    const hint = ch.hint.replace(/'/g, '&#39;');
+                    html += '<div class="challenge ' + (solved ? 'solved' : '') + '" id="ch-' + ch.id + '">';
+                    html += '<div class="challenge-cat">' + ch.category + '</div>';
+                    html += '<div class="meta">';
+                    html += '<span class="points">' + ch.points + '</span>';
+                    html += '<span class="difficulty ' + ch.difficulty + '">' + ch.difficulty + '</span>';
+                    html += '</div>';
+                    html += '<h3>' + ch.title + '</h3>';
+                    html += '<p>' + desc + '</p>';
+                    html += '<div class="flag-input">';
+                    html += '<input type="text" id="flag-' + ch.id + '" placeholder="Enter flag...">';
+                    html += '<button data-action="submit" data-id="' + ch.id + '">Submit</button>';
+                    html += '</div>';
+                    html += '<div class="result-msg" id="result-' + ch.id + '"></div>';
+                    html += '<button class="hint-btn" data-action="hint" data-id="' + ch.id + '">Show Hint (-50 pts)</button>';
+                    html += '<div class="hint" id="hint-' + ch.id + '">' + hint + '</div>';
+                    html += '</div>';
+                }
+                grid.innerHTML = html;
+
+                grid.addEventListener('click', function(e) {
+                    const btn = e.target.closest('[data-action]');
+                    if (!btn) return;
+                    const action = btn.getAttribute('data-action');
+                    const id = btn.getAttribute('data-id');
+                    if (action === 'submit') submitFlag(id);
+                    if (action === 'hint') toggleHint(id);
+                });
+            } catch(err) {
+                console.error('Failed to load challenges:', err);
+                document.getElementById('challenges').innerHTML = '<p style="color:var(--red)">Failed to load challenges. Refresh the page.</p>';
+            }
         }
 
         async function registerTeam() {

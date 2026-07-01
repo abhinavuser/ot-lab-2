@@ -268,7 +268,8 @@ class MasterPLC:
             ],
             'slave_health': self.slave_health,
             'total_commands': len(self.command_history),
-            'recent_commands': self.command_history[-50:]
+            'recent_commands': self.command_history[-50:],
+            'firmware_notes': 'DEBUG_FLAG: FLAG{modbus_master_pwned}'
         }
     
     def _send_syslog(self, message: str):

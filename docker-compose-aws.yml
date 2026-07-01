@@ -450,6 +450,54 @@ services:
       - "zone=ot"
       - "component=logstash"
 
+  # ============================================================================
+  # WIRESHARK & CTF
+  # ============================================================================
+  
+  wireshark:
+    image: lscr.io/linuxserver/wireshark:latest
+    container_name: railroad-wireshark
+    hostname: wireshark
+    cap_add:
+      - NET_ADMIN
+    networks:
+      ot-network:
+        ipv4_address: 172.25.0.70
+    ports:
+      - "3000:3000"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Asia/Kolkata
+    restart: unless-stopped
+    labels:
+      - "zone=ot"
+      - "component=wireshark"
+
+  ctf-server:
+    image: python:3.11-slim
+    container_name: railroad-ctf
+    hostname: ctf-server
+    networks:
+      ot-network:
+        ipv4_address: 172.25.0.80
+      dmz-network:
+        ipv4_address: 172.27.0.80
+    ports:
+      - "8090:8080"
+    volumes:
+      - ./ctf:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: bash -c "pip install --quiet flask flask-cors && python /app/ctf_server.py"
+    restart: unless-stopped
+    depends_on:
+      - master-plc
+      - scada
+    labels:
+      - "zone=dmz"
+      - "component=ctf-server"
+
 volumes:
   ews-data:
   scada-data:
