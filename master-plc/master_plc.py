@@ -302,8 +302,7 @@ class MasterPLC:
                             logger.warning(f"Slave {slave_id} ({slave['name']}) OFFLINE - missed heartbeats")
                             self._send_syslog(f"HEARTBEAT_FAILURE: Slave {slave_id} ({slave['name']})")
                             if self.segments[slave_id].state != TrackState.EMERGENCY_STOP:
-                                self.segments[slave_id].state = TrackState.FAULT
-                                self.segments[slave_id].signal_state = 'RED'
+                                self.emergency_stop(f"Heartbeat failure on Slave {slave_id} ({slave['name']})")
                 
                 time.sleep(slave.get('heartbeat_interval', 5))
             except Exception as e:

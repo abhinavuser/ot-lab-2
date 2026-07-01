@@ -168,6 +168,12 @@ HTML_TEMPLATE = '''
             color: var(--text-main);
             padding-left: 20px;
         }
+        button.active-route {
+            border-color: var(--warning);
+            color: var(--warning);
+            padding-left: 20px;
+            background-color: rgba(234, 179, 8, 0.05);
+        }
         
         .header-actions { display: flex; gap: 10px; }
         button.emergency { color: #ff6b6b; border-color: #4a1d1d; }
@@ -289,6 +295,18 @@ HTML_TEMPLATE = '''
                             'Signal: <span class="info">' + seg.signal_state + '</span><br>' +
                             'Barrier: <span class="success">' + (seg.barrier_engaged ? 'ENGAGED' : 'RAISED') + '</span><br>' +
                             'Occupied: <span class="' + occClass + '">' + (seg.sensor_occupied ? 'YES' : 'NO') + '</span>';
+                            
+                        const segmentDiv = document.getElementById('segment-' + seg.segment_id);
+                        if (segmentDiv) {
+                            const buttons = segmentDiv.querySelectorAll('button');
+                            buttons.forEach(btn => {
+                                if (seg.current_route && btn.getAttribute('onclick').includes(seg.current_route)) {
+                                    btn.classList.add('active-route');
+                                } else {
+                                    btn.classList.remove('active-route');
+                                }
+                            });
+                        }
                     });
                 }
                 
@@ -306,10 +324,11 @@ HTML_TEMPLATE = '''
                     const logDiv = document.getElementById('log-content');
                     const cmds = data.recent_commands.slice().reverse();
                     logDiv.innerHTML = cmds.map(cmd => {
-                        const ok = cmd.result && cmd.result.success;
-                        return '<div class="log-entry ' + (ok ? 'success' : 'error') + '">' +
+                        const ok = cmd.executed !== undefined ? cmd.executed : (cmd.result && cmd.result.success);
+                        const route = cmd.requested_route || cmd.route;
+                        return '<div class="log-entry ' + (ok ? 'warning' : 'error') + '">' +
                             '[' + (cmd.timestamp || '').substring(11, 19) + '] Seg ' + cmd.segment_id +
-                            ': ' + cmd.route + ' - ' + (ok ? 'SUCCESS' : 'REJECTED') + '</div>';
+                            ': ' + route + ' - ' + (ok ? 'COMMAND ACCEPTED' : 'COMMAND REJECTED') + '</div>';
                     }).join('');
                 }
             } catch (e) {
