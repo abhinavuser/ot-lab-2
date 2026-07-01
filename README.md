@@ -1,24 +1,22 @@
 # Railroad North - OT Security Training Lab
 
-A 2-day hands-on workshop that simulates a Critical Infrastructure Railway System using a Master/Slave PLC architecture. Students learn OT security fundamentals through guided attack and defense scenarios on Day 1, then apply their skills in a Capture The Flag competition on Day 2.
+A Operational Technology (OT) and ICS security training lab that simulates a Critical Infrastructure Railway System using a Master/Slave PLC architecture. Students learn OT security fundamentals through guided attack and defense scenarios, then apply their skills in a Capture The Flag competition.
 
 ## Prerequisites
 
 - Docker Desktop installed and running
 - At least 8GB RAM available
-- Python 3.x installed (for running attack scripts locally)
-- A modern web browser
 
 ## Quick Start
 
 ```bash
-# Start all lab containers
+# start the containers
 docker-compose up -d
 
-# Verify everything is running (8 containers)
+# verify everythin is runnin (8 containers)
 docker ps
 
-# Stop the lab when finished
+# and stop at end 
 docker-compose down
 ```
 
@@ -38,7 +36,7 @@ Once the containers are running, open these URLs in your browser:
 The lab follows the Purdue Enterprise Reference Architecture across 3 segmented networks:
 
 ```
-IT Network (172.26.x.x)      Your Laptop (the attacker)
+IT Network (172.26.x.x)      your lap (the attacker)
         |
    [ DMZ (172.27.x.x) ]      SCADA Dashboard, CTF Server
         |
@@ -58,9 +56,7 @@ IT Network (172.26.x.x)      Your Laptop (the attacker)
 | 7 | `railroad-wireshark` | Web-based Wireshark | 3000 |
 | 8 | `railroad-ctf` | CTF Flag Server | 8090 |
 
-## Workshop Structure
-
-### Day 1: Guided Exploration (4 hours)
+## Structure
 
 Students are walked through 4 supervised attack and defense scenarios:
 
@@ -80,19 +76,16 @@ This presents a menu with 3 attack options. No additional Python packages are re
 #### Simulating a DoS Attack
 
 ```bash
-# Sever the heartbeat to the North segment
 docker stop railroad-slave-plc-1
 
-# Wait 15-20 seconds for the E-STOP to trigger on the dashboard
+# wait 15 to 20 secs for the E-STOP to trigger on the dashboard
 
-# Recover the system
 docker start railroad-slave-plc-1
-# Then click "Clear Faults" on the SCADA Dashboard
+# then click "Clear Faults" on the Dashboard
 ```
 
-### Day 2: Capture The Flag (4 hours)
+### Capture The Flag 
 
-Students form teams and compete on 8 challenges:
 
 | Category | Challenges | Points |
 |---|---|---|
