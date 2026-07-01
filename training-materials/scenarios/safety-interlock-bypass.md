@@ -1,43 +1,40 @@
-# Scenario 3: Safety Interlock Bypass Attempt
+# Scenario 3: Safety Interlock Bypass (Sensor Spoofing)
 
 ## Objective
-Detect attempts to bypass safety rules by switching tracks while occupied.
+Demonstrate how an attacker can manipulate sensor data at the field device level to trick the Master PLC's safety logic into allowing a dangerous operation.
 
-## Difficulty: Hard | Duration: 30 minutes
+## Background
+The Master PLC relies on occupancy sensor data from the Slave PLCs to determine whether a train is on the track. If the sensor reports "occupied," the PLC will refuse to switch the track. But what if an attacker spoofs the sensor to report "clear" when a train is actually present?
 
 ## Attack Steps
 
-```bash
-# 1. Set occupancy sensor to true (simulate occupied track)
-docker exec railroad-slave-plc-1 curl -X POST \
-  http://localhost:8080/api/device/set \
-  -H "Content-Type: application/json" \
-  -d '{"device": "occupancy_sensor", "value": true}'
+1. Open the SCADA Dashboard and confirm Segment 1 shows `Occupied: NO`.
+2. Run the attack script:
+   ```bash
+   python scripts/modbus-attack.py
+   ```
+3. Select **Option 2: Safety Interlock Bypass / Sensor Spoofing**.
+4. The script sends a POST request to Slave PLC 1's `/api/device/set` endpoint:
+   ```json
+   {"device": "Occupancy Segment 1", "value": false}
+   ```
 
-# 2. Attempt switch command (should be rejected)
-docker exec railroad-dmz-pentest curl -X POST \
-  http://172.25.1.10:8080/api/device/switch \
-  -H "Content-Type: application/json" \
-  -d '{"switch_id": 1, "command": "ACTIVATE"}'
+## What to Observe
 
-# 3. Check audit logs for safety interlock trigger
-docker logs railroad-slave-plc-1 | grep -i "cannot\|rejected"
-docker logs railroad-collector | grep REJECTED
+- The Slave PLC accepts the command and changes the sensor state.
+- The Master PLC now believes the track is clear, even if a train were physically present.
+- This demonstrates the **most dangerous class of OT attack**: manipulating the physical feedback loop that safety systems rely on.
 
-# 4. Reset occupancy sensor
-docker exec railroad-slave-plc-1 curl -X POST \
-  http://localhost:8080/api/device/set \
-  -H "Content-Type: application/json" \
-  -d '{"device": "occupancy_sensor", "value": false}'
-```
+## Defense Discussion
 
-## Expected Logs
-```
-[REJECTED] Cannot activate switch 1: track occupied
-[AUDIT] Safety interlock rule 3 triggered
-```
+- Why is this dangerous? The safety interlock is only as trustworthy as the sensor data it receives. If the sensor is spoofed, the interlock is blind.
+- In real systems, physical sensors use redundancy (multiple independent sensors) to detect spoofing.
+- Network segmentation should prevent unauthorized devices from reaching field-level PLCs.
 
-## Assessment
-- Was the safety interlock enforced?
-- Were proper audit logs generated?
-- Can you identify which rule was triggered?
+## Recovery
+
+The system will continue operating normally since we spoofed the sensor to "clear" (a safe state). No recovery action needed for this demo.
+
+## Advanced Exercise
+
+Try spoofing the sensor to `true` (occupied) and then attempt to switch the track via the SCADA dashboard. You should see the interlock reject the command. This proves the safety logic works correctly when sensor data is honest.

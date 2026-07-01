@@ -268,7 +268,7 @@ class MasterPLC:
             ],
             'slave_health': self.slave_health,
             'total_commands': len(self.command_history),
-            'recent_commands': self.command_history[-10:]
+            'recent_commands': self.command_history[-50:]
         }
     
     def _send_syslog(self, message: str):

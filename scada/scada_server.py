@@ -320,15 +320,38 @@ HTML_TEMPLATE = '''
                 
                 document.getElementById('command-count').textContent = data.master_plc.total_commands || 0;
                 
-                if (data.recent_commands && data.recent_commands.length > 0) {
+                const scadaCmds = data.recent_commands || [];
+                const allCmds = data.master_plc.recent_commands || [];
+                if (allCmds.length > 0) {
                     const logDiv = document.getElementById('log-content');
-                    const cmds = data.recent_commands.slice().reverse();
+                    const cmds = allCmds.slice().reverse();
                     logDiv.innerHTML = cmds.map(cmd => {
-                        const ok = cmd.executed !== undefined ? cmd.executed : (cmd.result && cmd.result.success);
+                        const ok = cmd.valid;
                         const route = cmd.requested_route || cmd.route;
-                        return '<div class="log-entry ' + (ok ? 'warning' : 'error') + '">' +
+                        
+                        // Correlate: Is this command in the SCADA dashboard's local history?
+                        const isScada = scadaCmds.some(sc => 
+                            sc.segment_id === cmd.segment_id && 
+                            sc.route === route && 
+                            Math.abs(new Date(sc.timestamp) - new Date(cmd.timestamp)) < 5000
+                        );
+                        
+                        let statusText = 'REJECTED: ' + (cmd.reason || 'Safety Interlock');
+                        let cssClass = 'error';
+                        
+                        if (ok) {
+                            if (isScada) {
+                                statusText = 'COMMAND ACCEPTED';
+                                cssClass = 'success';
+                            } else {
+                                statusText = 'UNAUTHORIZED API CALL';
+                                cssClass = 'warning';
+                            }
+                        }
+                        
+                        return '<div class="log-entry ' + cssClass + '">' +
                             '[' + (cmd.timestamp || '').substring(11, 19) + '] Seg ' + cmd.segment_id +
-                            ': ' + route + ' - ' + (ok ? 'COMMAND ACCEPTED' : 'COMMAND REJECTED') + '</div>';
+                            ': ' + route + ' - ' + statusText + '</div>';
                     }).join('');
                 }
             } catch (e) {

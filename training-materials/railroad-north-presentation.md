@@ -56,7 +56,28 @@ style: |
 
 # Railroad North
 ## Applied OT & ICS Security Training
-Presented to Engineering & Cyber Security Students
+A 2-Day Hands-On Workshop for Engineering & Cyber Security Students
+
+---
+
+## Workshop Overview
+
+This is a **2-Day intensive workshop** that puts you inside a live OT environment.
+
+<div class="grid">
+  <div>
+    <div class="card">
+      <h3>Day 1: Guided Exploration</h3>
+      <p>Understand OT/ICS fundamentals. Explore the SCADA dashboard. Execute supervised attack and defense scenarios against a live railway control system.</p>
+    </div>
+  </div>
+  <div>
+    <div class="card card-danger">
+      <h3>Day 2: Capture The Flag</h3>
+      <p>Apply everything you learned. Work in teams to solve 8 challenges across Reconnaissance, Exploitation, Forensics, and Defense categories using Wireshark and the lab tools.</p>
+    </div>
+  </div>
+</div>
 
 ---
 
@@ -93,8 +114,25 @@ This laboratory simulates a **Critical Infrastructure Railway System**. It is de
 
 <div class="card">
   <strong>The Core Mission</strong>
-  You will step into the shoes of both an attacker and a defender. You will learn how to read industrial protocols, bypass physical safety interlocks, and finally, how to detect and stop these attacks using modern SOC (Security Operations Center) tools.
+  You will step into the shoes of both an attacker and a defender. You will learn how to read industrial protocols, bypass physical safety interlocks, and detect these attacks using network forensics and log correlation.
 </div>
+
+---
+
+## Lab Architecture & Components
+
+Our environment runs **8 Docker containers** across 3 segmented networks:
+
+| Container | Role | Port | Network |
+|---|---|---|---|
+| **SCADA Dashboard** | Operator Interface | `localhost:8081` | DMZ + OT |
+| **Master PLC** | Central Coordinator | `localhost:8085` | OT |
+| **Slave PLC 1** (North) | Field Controller | `localhost:8086` | OT |
+| **Slave PLC 2** (Central) | Field Controller | `localhost:8087` | OT |
+| **Slave PLC 3** (South) | Field Controller | `localhost:8088` | OT |
+| **Syslog Collector** | Log Aggregation | `localhost:5140` | OT |
+| **Wireshark** | Packet Analysis | `localhost:3000` | OT |
+| **CTF Server** | Challenge Scoring | `localhost:8090` | DMZ + OT |
 
 ---
 
@@ -111,17 +149,17 @@ Our lab is segmented strictly according to the industry-standard Purdue Model.
   <tr>
     <td><strong>IT / Enterprise</strong></td>
     <td>Level 4</td>
-    <td>Engineering Workstations, Corporate File Transfers (Subnet: 172.26.x.x)</td>
+    <td>Your laptop (the attacker's workstation)</td>
   </tr>
   <tr>
     <td><strong>DMZ (Demilitarized)</strong></td>
     <td>Level 3.5</td>
-    <td>SCADA Web Dashboard, Syslog Aggregator, Secure Proxies (Subnet: 172.27.x.x)</td>
+    <td>SCADA Web Dashboard, CTF Scoreboard (172.27.x.x)</td>
   </tr>
   <tr>
     <td><strong>OT / Control</strong></td>
     <td>Level 1-3</td>
-    <td>Master PLC, Zeek IDS, ELK Stack (Subnet: 172.25.x.x)</td>
+    <td>Master PLC, Syslog Collector, Wireshark (172.25.x.x)</td>
   </tr>
   <tr>
     <td><strong>Field Devices</strong></td>
@@ -140,162 +178,236 @@ To secure the railway, you must first understand how it operates.
   <div>
     <div class="card">
       <h3>1. The Master PLC (The Brain)</h3>
-      <p>The Master Programmable Logic Controller acts as the central coordinator. It stores the "global truth" of the railway. It continuously polls the Slave PLCs every 5 seconds (Heartbeat) and enforces safety rules.</p>
+      <p>The central coordinator. It stores the "global truth" of the railway. It continuously polls the Slave PLCs every 5 seconds via a <strong>Heartbeat</strong> and enforces safety interlock rules before allowing any track switch.</p>
     </div>
   </div>
   <div>
     <div class="card">
       <h3>2. The Slave PLCs (The Muscle)</h3>
-      <p>Located in the North, Central, and South segments. These directly open/close physical track switches and lower barriers. They blindly follow the Master's orders.</p>
+      <p>Located in the North, Central, and South segments. These directly control physical track switches, signals, and barriers. They report sensor data to the Master and execute its commands.</p>
     </div>
   </div>
 </div>
 
 ---
 
-## Modbus TCP: The Language of Industry
+## API Communication: The Attack Surface
 
-Our PLCs communicate using **Modbus TCP**, a protocol from 1979 that is still used globally today.
+Our PLCs communicate using **REST APIs over HTTP** (simulating the insecurity of real-world Modbus TCP).
 
 <div class="card card-danger">
-  <strong>The Security Flaw:</strong> Modbus TCP has zero encryption and zero authentication. If you can reach the network port (502), the PLC will execute your command.
+  <strong>The Security Flaw:</strong> The API endpoints have zero authentication. If you can reach the network port, the PLC will execute your command without verifying who sent it.
 </div>
 
-**Key Modbus Functions You Will See:**
-- `Function 0x03 (Read Holding Registers)`: Used by the Master to check sensor states.
-- `Function 0x06 (Write Single Register)`: Used by the SCADA UI to change a track route.
-- `Function 0x0F (Write Multiple Coils)`: Used to trigger emergency stops.
+**Key API Endpoints You Will Target:**
+- `GET /api/status` - Read the full system state (reconnaissance)
+- `POST /api/command` - Switch a track route (exploitation)
+- `POST /api/device/set` - Manipulate field sensors (sensor spoofing)
+- `POST /api/emergency` - Trigger an emergency stop
 
 ---
 
 ## Built-In Safety Interlocks (Defensive Logic)
 
-To prevent catastrophic train derailments, our Master PLC has hard-coded safety logic:
+To prevent catastrophic train derailments, the Master PLC has hard-coded safety logic:
 
-1. **Track Occupancy Lock:** A track switch <span class="alert">will not operate</span> if the occupancy sensor detects a train currently on that specific segment.
-2. **Barrier Enforcement:** Train routes cannot be cleared unless physical crossing barriers are confirmed to be lowered and locked.
-3. **Heartbeat Monitoring:** If the Master PLC loses connection to a Slave PLC, it triggers a global `FAULT` state, halting all trains.
-
----
-
-## The Defender's Toolkit (SOC Stack)
-
-Because Modbus is insecure by design, we must rely on **network monitoring** to secure the OT environment.
-
-<div class="grid">
-  <div>
-    <ul>
-      <li><strong>Zeek IDS:</strong> An Intrusion Detection System. It performs Deep Packet Inspection (DPI) on port 502 to alert us to malformed Modbus traffic or unauthorized writes.</li>
-      <li><strong>Syslog Collector:</strong> Aggregates every command and error from the PLCs into a central server.</li>
-    </ul>
-  </div>
-  <div>
-    <ul>
-      <li><strong>Elasticsearch & Logstash:</strong> Ingests millions of log events and indexes them for rapid searching.</li>
-      <li><strong>Kibana:</strong> Our visual dashboard. Used by analysts to spot anomalies (like a sudden spike in Modbus traffic).</li>
-    </ul>
-  </div>
-</div>
+1. **Route Conflict Prevention:** The Master PLC checks if two connecting segments are requesting conflicting routes at a junction. If they conflict, the command is <span class="alert">rejected</span>.
+2. **Track Occupancy Lock:** A track switch will not operate if the occupancy sensor detects a train currently on that segment.
+3. **Barrier Enforcement:** Routes cannot be cleared unless physical crossing barriers are confirmed to be lowered and locked.
+4. **Heartbeat Monitoring:** If the Master PLC loses connection to a Slave PLC (3 missed heartbeats), it triggers a global **EMERGENCY STOP**.
 
 ---
 
-## Training Scenarios
-
-You will now execute and defend against four distinct cyber-physical attacks.
+# DAY 1
+## Guided Attack & Defense Scenarios
 
 ---
 
-### Scenario 1: Unauthorized Track Switching
+## Scenario 1: Unauthorized Track Switching
 
-**The Concept:** An adversary gains access to the OT network and attempts to switch a track route, bypassing the SCADA operator dashboard.
+**Concept:** An adversary bypasses the SCADA dashboard and sends a direct API command to switch a track route.
 
 <div class="grid">
   <div>
     <div class="card card-danger">
       <h3>The Attack</h3>
-      <p>The student will use a script to send a direct Modbus <code>Write Register (0x06)</code> command to the Master PLC from an unauthorized IP address.</p>
+      <p>Run <code>python scripts/modbus-attack.py</code> and select <strong>Option 1</strong>. This sends a direct POST request to the Master PLC, bypassing the SCADA operator entirely.</p>
     </div>
   </div>
   <div>
     <div class="card card-success">
       <h3>The Defense</h3>
-      <p>Identify the rogue IP address using the Kibana dashboard. Review the Zeek <code>notice.log</code> to see exactly which register was modified, and propose firewall segmentation rules.</p>
+      <p>Watch the SCADA Dashboard. The System Audit Log will show the command in <strong>yellow</strong> (UNAUTHORIZED API CALL) instead of green (legitimate operator command). This is <strong>Log Correlation</strong> in action.</p>
     </div>
   </div>
 </div>
 
 ---
 
-### Scenario 2: PLC Heartbeat Failure (DoS)
+## Scenario 2: Heartbeat Failure (DoS Attack)
 
-**The Concept:** A segment of the railway loses connectivity due to a cyber-attack (DoS) or a physical network cut.
+**Concept:** A segment of the railway loses connectivity due to a Denial of Service attack or a physical network cut.
 
 <div class="grid">
   <div>
     <div class="card card-danger">
       <h3>The Attack</h3>
-      <p>We will intentionally isolate a Slave PLC, severing its connection to the Master controller.</p>
+      <p>Run <code>docker stop railroad-slave-plc-1</code> in your terminal. This simulates cutting the network cable to the North segment. Wait 15-20 seconds.</p>
     </div>
   </div>
   <div>
     <div class="card card-success">
       <h3>The Defense</h3>
-      <p>Watch the Master PLC automatically trigger the safety interlock and enter a <code>FAULT</code> state. Students will use the logs to determine the exact timestamp of the network loss and execute the standard E-STOP recovery procedure.</p>
+      <p>Watch the dashboard enter <strong>EMERGENCY STOP</strong> automatically. The Master PLC detected 3 missed heartbeats and triggered the fail-safe. The system "fails closed" for physical safety.</p>
     </div>
   </div>
 </div>
 
+**Recovery:** `docker start railroad-slave-plc-1`, wait 5 seconds, then click **Clear Faults** on the SCADA dashboard.
+
 ---
 
-### Scenario 3: Safety Interlock Bypass
+## Scenario 3: SCADA Alarm Flooding
 
-**The Concept:** What happens if an attacker manipulates the sensor data that the safety logic relies on?
+**Concept:** The attacker overwhelms the SCADA operator by flooding the system with rapid, conflicting commands.
 
 <div class="grid">
   <div>
     <div class="card card-danger">
       <h3>The Attack</h3>
-      <p>The attacker forces the "Occupancy Sensor" value on a Slave PLC to <code>False</code> (Clear), tricking the Master PLC into allowing a track switch while a train is actually present.</p>
+      <p>Run <code>python scripts/modbus-attack.py</code> and select <strong>Option 3</strong>. This fires 50 commands in 5 seconds, rapidly toggling a track switch back and forth.</p>
     </div>
   </div>
   <div>
     <div class="card card-success">
       <h3>The Defense</h3>
-      <p>This is the most dangerous scenario. Students will analyze the logs for impossible physics (e.g., a track clearing in 0.1 seconds) and learn to write custom Zeek rules to alert on rapid sensor-state toggling.</p>
+      <p>The Audit Log is overwhelmed with yellow warnings. In a real SOC, this is called <strong>Alert Fatigue</strong>. Defenders must implement rate limiting and anomaly detection to filter the noise from genuine threats.</p>
     </div>
   </div>
 </div>
 
 ---
 
-### Scenario 4: Modbus Protocol Fuzzing
+## Scenario 4: Safety Interlock Validation
 
-**The Concept:** Attackers often map out a network before striking. We must detect them during the reconnaissance phase.
+**Concept:** Verify that the safety interlocks actually prevent dangerous operations even under attack.
 
 <div class="grid">
   <div>
     <div class="card card-danger">
-      <h3>The Attack</h3>
-      <p>Students will use the <code>modbus-attack.py</code> toolkit to rapidly scan the PLC and send malformed function codes to map out the memory registers.</p>
+      <h3>The Test</h3>
+      <p>Set Segment 1 to ROUTE_A, then attempt to set Segment 2 to ROUTE_A. The Master PLC should <strong>reject</strong> this because the routes conflict at the junction. The Audit Log will show a <strong>red REJECTED</strong> entry with the reason.</p>
     </div>
   </div>
   <div>
     <div class="card card-success">
-      <h3>The Defense</h3>
-      <p>Identify the automated scanning patterns in the network traffic. Detect the specific <code>Illegal Function</code> exception codes being dropped and logged by the PLCs.</p>
+      <h3>The Takeaway</h3>
+      <p>Even if an attacker gains full API access, the <strong>hard-coded safety logic</strong> in the PLC firmware provides the last line of defense. This is why OT security uses a <strong>defense-in-depth</strong> strategy.</p>
     </div>
   </div>
 </div>
 
 ---
 
-## Lab Execution & Deliverables
+## Using Wireshark for Network Forensics
 
-Your task is to work through these scenarios on your local lab instance. 
+Open **Wireshark** at `http://localhost:3000` in your browser.
 
-1. **Access the Dashboard:** Go to <code>http://localhost:8080</code> to view the SCADA system.
-2. **Review the Logs:** Analyze the output of the Master PLC and the Syslog collector.
-3. **Document Findings:** For each scenario, document the Attack Vector, the resulting System Impact, and the Defensive Mitigation.
+<div class="card">
+  <h3>What to Look For</h3>
+  <ul>
+    <li><strong>HTTP POST requests</strong> to <code>/api/command</code> -- These are route switch commands</li>
+    <li><strong>Rapid request bursts</strong> -- Indicates a flood/DoS attack</li>
+    <li><strong>Unauthorized source IPs</strong> -- Commands not from the SCADA server (172.27.0.20)</li>
+    <li><strong>Heartbeat gaps</strong> -- Missing periodic GET requests from Slave PLCs</li>
+  </ul>
+</div>
+
+Practice capturing traffic while a partner runs the attack scripts. You will need these skills for Day 2.
+
+---
+
+# DAY 2
+## Capture The Flag Challenge
+
+---
+
+## CTF Rules & Setup
+
+<div class="grid">
+  <div>
+    <div class="card">
+      <h3>How it Works</h3>
+      <ul>
+        <li>Open the <strong>CTF Scoreboard</strong> at <code>http://localhost:8090</code></li>
+        <li>Register your team name</li>
+        <li>Solve challenges and submit flags to earn points</li>
+        <li>8 challenges across 4 categories</li>
+        <li>Total possible score: <strong>1,500 points</strong></li>
+      </ul>
+    </div>
+  </div>
+  <div>
+    <div class="card card-danger">
+      <h3>Categories</h3>
+      <ul>
+        <li><strong>Reconnaissance (200 pts):</strong> Map the OT network</li>
+        <li><strong>Exploitation (450 pts):</strong> Execute attacks</li>
+        <li><strong>Forensics (600 pts):</strong> Analyze evidence</li>
+        <li><strong>Defense (550 pts):</strong> Recover and validate</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+---
+
+## CTF Tools Available
+
+You have access to these tools during the CTF:
+
+| Tool | Access | Purpose |
+|---|---|---|
+| **SCADA Dashboard** | `localhost:8081` | Monitor the system state in real time |
+| **Wireshark** | `localhost:3000` | Capture and analyze network traffic |
+| **Attack Script** | `python scripts/modbus-attack.py` | Pre-built attack vectors |
+| **curl / browser** | Your terminal | Craft custom API requests |
+| **Docker CLI** | Your terminal | Start/stop containers |
+| **Master PLC API** | `localhost:8085/api/status` | Directly query system state |
+| **Slave PLC APIs** | `localhost:8086-8088` | Directly query field devices |
+
+---
+
+## CTF Challenge Preview
+
+| # | Challenge | Category | Points | Difficulty |
+|---|---|---|---|---|
+| 1 | Network Reconnaissance | Recon | 100 | Easy |
+| 2 | Protocol Identification | Recon | 100 | Easy |
+| 3 | Unauthorized Track Switch | Exploit | 200 | Medium |
+| 4 | Sensor Spoofing | Exploit | 250 | Medium |
+| 5 | Log Correlation | Forensics | 300 | Hard |
+| 6 | Packet Capture Analysis | Forensics | 300 | Hard |
+| 7 | Emergency Recovery | Defense | 200 | Medium |
+| 8 | Safety Interlock Validation | Defense | 350 | Hard |
+
+**Hints are available but cost -50 points each!**
+
+---
+
+## Lab Access Summary
+
+| What | Where |
+|---|---|
+| SCADA Dashboard | `http://localhost:8081` |
+| CTF Scoreboard | `http://localhost:8090` |
+| Wireshark | `http://localhost:3000` |
+| Master PLC API | `http://localhost:8085` |
+| Slave PLC 1 (North) | `http://localhost:8086` |
+| Slave PLC 2 (Central) | `http://localhost:8087` |
+| Slave PLC 3 (South) | `http://localhost:8088` |
+| Syslog | `localhost:5140` (UDP) |
+| Attack Script | `python scripts/modbus-attack.py` |
 
 ---
 

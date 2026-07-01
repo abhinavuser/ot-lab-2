@@ -1,44 +1,118 @@
 # Railroad North - OT Security Training Lab
 
-This repository contains a full Operational Technology (OT) and ICS security training lab. It simulates a railway control system using a Master/Slave PLC architecture, allowing students to learn about Modbus TCP, physical safety interlocks, and how to defend against cyber-physical attacks.
+A 2-day hands-on workshop that simulates a Critical Infrastructure Railway System using a Master/Slave PLC architecture. Students learn OT security fundamentals through guided attack and defense scenarios on Day 1, then apply their skills in a Capture The Flag competition on Day 2.
 
-## How to Run the Lab
+## Prerequisites
 
-You will need Docker and Docker Compose installed to run this environment. 
+- Docker Desktop installed and running
+- At least 8GB RAM available
+- Python 3.x installed (for running attack scripts locally)
+- A modern web browser
 
-We provide two deployment options depending on your hardware:
+## Quick Start
 
-1. **Local Testing (Slim Setup)**: Uses lightweight containers so it won't crash standard laptops (requires <8GB RAM). 
-   ```bash
-   docker-compose up -d
-   ```
-
-2. **AWS / Cloud Deployment (Full SOC Setup)**: Includes the heavy ELK stack (Elasticsearch, Logstash, Kibana) and Zeek IDS. Use this if you are running on a server with 16GB+ RAM.
-   ```bash
-   docker-compose -f docker-compose-aws.yml up -d
-   ```
-
-To stop the lab and clean up the containers, run:
 ```bash
+# Start all lab containers
+docker-compose up -d
+
+# Verify everything is running (8 containers)
+docker ps
+
+# Stop the lab when finished
 docker-compose down
 ```
 
 ## Accessing the Lab
 
-Once the containers are running, you can access the main components:
+Once the containers are running, open these URLs in your browser:
 
-- **SCADA Dashboard**: [http://localhost:8081](http://localhost:8081) (The main operator interface)
-- **Master PLC Logs**: Run `docker logs -f railroad-master-plc` to watch the Modbus traffic and safety logic in real time.
+| Service | URL | Purpose |
+|---|---|---|
+| **SCADA Dashboard** | [http://localhost:8081](http://localhost:8081) | Main operator control interface |
+| **CTF Scoreboard** | [http://localhost:8090](http://localhost:8090) | Day 2 challenge submission and scoring |
+| **Wireshark** | [http://localhost:3000](http://localhost:3000) | Web-based packet capture and analysis |
+| **Master PLC API** | [http://localhost:8085/api/status](http://localhost:8085/api/status) | Raw PLC status (JSON) |
 
 ## Architecture
 
-The lab strictly follows the Purdue Enterprise Reference Architecture across three segmented networks:
-- **IT Network**: Engineering workstations and file transfers.
-- **DMZ Network**: Hosts the SCADA Web Dashboard.
-- **OT Network**: Hosts the Master PLC (coordinator) and 3 Slave PLCs (North, Central, South) communicating over unencrypted Modbus TCP.
+The lab follows the Purdue Enterprise Reference Architecture across 3 segmented networks:
 
-## Training Presentation
+```
+IT Network (172.26.x.x)      Your Laptop (the attacker)
+        |
+   [ DMZ (172.27.x.x) ]      SCADA Dashboard, CTF Server
+        |
+  OT Network (172.25.x.x)    Master PLC, Slave PLCs, Wireshark, Syslog
+```
 
-A detailed presentation designed for students is included in the `training-materials/` directory. 
-- File: `training-materials/railroad-north-presentation.md`
-- You can view and export these slides using the "Marp for VS Code" extension. It covers the IT vs. OT differences, Modbus vulnerabilities, and walks through the 4 attack scenarios.
+### Containers
+
+| # | Container | Role | Port |
+|---|---|---|---|
+| 1 | `railroad-scada` | SCADA Operator Dashboard | 8081 |
+| 2 | `railroad-master-plc` | Central PLC Coordinator | 8085 |
+| 3 | `railroad-slave-plc-1` | North Segment Controller | 8086 |
+| 4 | `railroad-slave-plc-2` | Central Segment Controller | 8087 |
+| 5 | `railroad-slave-plc-3` | South Segment Controller | 8088 |
+| 6 | `railroad-collector` | Syslog Aggregation | 5140 |
+| 7 | `railroad-wireshark` | Web-based Wireshark | 3000 |
+| 8 | `railroad-ctf` | CTF Flag Server | 8090 |
+
+## Workshop Structure
+
+### Day 1: Guided Exploration (4 hours)
+
+Students are walked through 4 supervised attack and defense scenarios:
+
+1. **Unauthorized Track Switching** - Bypass the SCADA dashboard via direct API calls
+2. **Heartbeat Failure (DoS)** - Simulate a network cut with `docker stop`; observe the E-STOP safety interlock
+3. **SCADA Alarm Flooding** - Overwhelm the operator with 50 rapid commands
+4. **Safety Interlock Validation** - Test that hard-coded PLC logic prevents dangerous operations
+
+#### Running the Attack Script
+
+```bash
+python scripts/modbus-attack.py
+```
+
+This presents a menu with 3 attack options. No additional Python packages are required (uses only standard libraries).
+
+#### Simulating a DoS Attack
+
+```bash
+# Sever the heartbeat to the North segment
+docker stop railroad-slave-plc-1
+
+# Wait 15-20 seconds for the E-STOP to trigger on the dashboard
+
+# Recover the system
+docker start railroad-slave-plc-1
+# Then click "Clear Faults" on the SCADA Dashboard
+```
+
+### Day 2: Capture The Flag (4 hours)
+
+Students form teams and compete on 8 challenges:
+
+| Category | Challenges | Points |
+|---|---|---|
+| Reconnaissance | Network mapping, protocol ID | 200 |
+| Exploitation | Track switching, sensor spoofing | 450 |
+| Forensics | Log correlation, packet analysis | 600 |
+| Defense | Emergency recovery, interlock validation | 550 |
+
+Open the CTF Scoreboard at [http://localhost:8090](http://localhost:8090), register a team name, and start solving.
+
+## Presentation Slides
+
+A complete slide deck is included in `training-materials/railroad-north-presentation.md`. View and export using the [Marp for VS Code](https://marketplace.visualstudio.com/items?itemName=marp-team.marp-vscode) extension.
+
+## Troubleshooting
+
+| Issue | Fix |
+|---|---|
+| Dashboard not loading | Run `docker restart railroad-scada` and wait 10 seconds |
+| Attack script fails | Ensure containers are running with `docker ps` |
+| Clear Faults not working | Make sure all Slave PLCs are started first, then click the button |
+| Wireshark not loading | The image is large (~500MB); wait for the pull to complete |
+| E-STOP won't clear | Run `docker start` on any stopped slaves, wait 10s, then Clear Faults |

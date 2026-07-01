@@ -1,2 +1,3 @@
-# Ignore reference documents folder
-reference-docs/
+__pycache__/
+*.pyc
+training-materials/*.pdf
