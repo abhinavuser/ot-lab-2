@@ -56,25 +56,25 @@ style: |
 
 # Railroad North
 ## Applied OT & ICS Security Training
-A 2-Day Hands-On Workshop for Engineering & Cyber Security Students
+A Hands-On Workshop for Engineering & Cyber Security Students
 
 ---
 
 ## Workshop Overview
 
-This is a **2-Day intensive workshop** that puts you inside a live OT environment.
+This is an **intensive hands-on workshop** that puts you inside a live OT environment.
 
 <div class="grid">
   <div>
     <div class="card">
-      <h3>Day 1: Guided Exploration</h3>
+      <h3>Part 1: Guided Exploration</h3>
       <p>Understand OT/ICS fundamentals. Explore the SCADA dashboard. Execute supervised attack and defense scenarios against a live railway control system.</p>
     </div>
   </div>
   <div>
     <div class="card card-danger">
-      <h3>Day 2: Capture The Flag</h3>
-      <p>Apply everything you learned. Work in teams to solve 8 challenges across Reconnaissance, Exploitation, Forensics, and Defense categories using Wireshark and the lab tools.</p>
+      <h3>Part 2: Capture The Flag</h3>
+      <p>Apply everything you learned. Work in teams to solve 10 challenges across Reconnaissance, Exploitation, Forensics, and Defense categories using Wireshark and the lab tools.</p>
     </div>
   </div>
 </div>
@@ -218,7 +218,7 @@ To prevent catastrophic train derailments, the Master PLC has hard-coded safety 
 
 ---
 
-# DAY 1
+# PART 1
 ## Guided Attack & Defense Scenarios
 
 ---
@@ -323,11 +323,11 @@ Open **Wireshark** at `http://localhost:3000` in your browser.
   </ul>
 </div>
 
-Practice capturing traffic while a partner runs the attack scripts. You will need these skills for Day 2.
+Practice capturing traffic while a partner runs the attack scripts. You will need these skills for the CTF.
 
 ---
 
-# DAY 2
+# PART 2
 ## Capture The Flag Challenge
 
 ---
@@ -342,8 +342,8 @@ Practice capturing traffic while a partner runs the attack scripts. You will nee
         <li>Open the <strong>CTF Scoreboard</strong> at <code>http://localhost:8090</code></li>
         <li>Register your team name</li>
         <li>Solve challenges and submit flags to earn points</li>
-        <li>8 challenges across 4 categories</li>
-        <li>Total possible score: <strong>1,500 points</strong></li>
+        <li>10 challenges across 4 categories</li>
+        <li>Total possible score: <strong>2,400 points</strong></li>
       </ul>
     </div>
   </div>
@@ -352,8 +352,8 @@ Practice capturing traffic while a partner runs the attack scripts. You will nee
       <h3>Categories</h3>
       <ul>
         <li><strong>Reconnaissance (200 pts):</strong> Map the OT network</li>
-        <li><strong>Exploitation (450 pts):</strong> Execute attacks</li>
-        <li><strong>Forensics (600 pts):</strong> Analyze evidence</li>
+        <li><strong>Exploitation (850 pts):</strong> Execute attacks and fuzz APIs</li>
+        <li><strong>Forensics (1,100 pts):</strong> Analyze PCAPs and memory</li>
         <li><strong>Defense (550 pts):</strong> Recover and validate</li>
       </ul>
     </div>
@@ -390,6 +390,8 @@ You have access to these tools during the CTF:
 | 6 | Packet Capture Analysis | Forensics | 300 | Hard |
 | 7 | Emergency Recovery | Defense | 200 | Medium |
 | 8 | Safety Interlock Validation | Defense | 350 | Hard |
+| 9 | API Fuzzing | Exploit | 400 | Insane |
+| 10 | Deep Memory Forensics | Forensics | 500 | Insane |
 
 **Hints are available but cost -50 points each!**
 
