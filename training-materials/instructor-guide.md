@@ -222,7 +222,7 @@ curl http://13.206.102.61:8085/api/status | python -m json.tool
 
 ---
 
-## 🔧 Troubleshooting
+## Troubleshooting
 
 | Problem | Fix |
 |---|---|
@@ -236,7 +236,7 @@ curl http://13.206.102.61:8085/api/status | python -m json.tool
 
 ---
 
-## ⚠️ Critical Reminders for Tomorrow
+## Critical Reminders for Tomorrow
 
 1. **Before the event:** Open ALL URLs yourself to verify they're responding.
 2. **Tell your AWS friend:** Do NOT restart any containers during the CTF session (state is in-memory).

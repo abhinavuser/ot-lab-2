@@ -131,7 +131,7 @@ Our environment runs on an **AWS cloud instance** with 8+ Docker containers acro
 | **Wireshark** | Packet Analysis | `https://13.206.102.61:3001` |
 | **CTF Server** | Challenge Scoring | `http://13.206.102.61:8090` |
 
-> ⚠️ Wireshark uses HTTPS. Your browser will show a security warning — click **Advanced → Proceed** to continue.
+> Note: Wireshark uses HTTPS. Your browser will show a security warning — click **Advanced → Proceed** to continue.
 
 ---
 

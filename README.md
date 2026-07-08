@@ -26,10 +26,10 @@ Once the containers are running, open these URLs in your browser:
 
 | Service | URL | Purpose |
 |---|---|---|
-| **SCADA Dashboard** | [http://localhost:8081](http://localhost:8081) | Main operator control interface |
-| **CTF Scoreboard** | [http://localhost:8090](http://localhost:8090) | Day 2 challenge submission and scoring |
-| **Wireshark** | [http://localhost:3000](http://localhost:3000) | Web-based packet capture and analysis |
-| **Master PLC API** | [http://localhost:8085/api/status](http://localhost:8085/api/status) | Raw PLC status (JSON) |
+| **SCADA Dashboard** | [http://13.206.102.61:8081](http://13.206.102.61:8081) | Main operator control interface |
+| **CTF Scoreboard** | [http://13.206.102.61:8090](http://13.206.102.61:8090) | Day 2 challenge submission and scoring |
+| **Wireshark** | [https://13.206.102.61:3001](https://13.206.102.61:3001) | Web-based packet capture and analysis |
+| **Master PLC API** | [http://13.206.102.61:8085/api/status](http://13.206.102.61:8085/api/status) | Raw PLC status (JSON) |
 
 ## Architecture
 
@@ -90,11 +90,11 @@ docker start railroad-slave-plc-1
 | Category | Challenges | Points |
 |---|---|---|
 | Reconnaissance | Network mapping, protocol ID | 200 |
-| Exploitation | Track switching, sensor spoofing | 450 |
-| Forensics | Log correlation, packet analysis | 600 |
+| Exploitation | Track switching, sensor spoofing, API fuzzing | 850 |
+| Forensics | Log correlation, packet analysis, memory forensics | 1100 |
 | Defense | Emergency recovery, interlock validation | 550 |
 
-Open the CTF Scoreboard at [http://localhost:8090](http://localhost:8090), register a team name, and start solving.
+Open the CTF Scoreboard at [http://13.206.102.61:8090](http://13.206.102.61:8090), register a team name, and start solving.
 
 ## Presentation Slides
 
