@@ -338,8 +338,14 @@ def send_command():
     except KeyError:
         return jsonify({'success': False, 'error': f'Invalid route: {route_name}'}), 400
     
+    # Pre-validate to capture rejection reason
+    is_valid, reason = master_plc.validate_route_command(segment_id, route)
     result = master_plc.execute_route_command(segment_id, route)
-    return jsonify({'success': result, 'segment_id': segment_id, 'requested_route': route_name})
+    
+    response = {'success': result, 'segment_id': segment_id, 'requested_route': route_name}
+    if not result:
+        response['reason'] = reason
+    return jsonify(response)
 
 @app.route('/api/segments', methods=['GET'])
 def get_segments():

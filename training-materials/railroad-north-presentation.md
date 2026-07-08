@@ -121,18 +121,17 @@ This laboratory simulates a **Critical Infrastructure Railway System**. It is de
 
 ## Lab Architecture & Components
 
-Our environment runs **8 Docker containers** across 3 segmented networks:
+Our environment runs on an **AWS cloud instance** with 8+ Docker containers across 3 segmented networks:
 
-| Container | Role | Port | Network |
-|---|---|---|---|
-| **SCADA Dashboard** | Operator Interface | `localhost:8081` | DMZ + OT |
-| **Master PLC** | Central Coordinator | `localhost:8085` | OT |
-| **Slave PLC 1** (North) | Field Controller | `localhost:8086` | OT |
-| **Slave PLC 2** (Central) | Field Controller | `localhost:8087` | OT |
-| **Slave PLC 3** (South) | Field Controller | `localhost:8088` | OT |
-| **Syslog Collector** | Log Aggregation | `localhost:5140` | OT |
-| **Wireshark** | Packet Analysis | `localhost:3000` | OT |
-| **CTF Server** | Challenge Scoring | `localhost:8090` | DMZ + OT |
+| Container | Role | Access URL |
+|---|---|---|
+| **SCADA Dashboard** | Operator Interface | `http://13.206.102.61:8081` |
+| **Master PLC** | Central Coordinator | `http://13.206.102.61:8085` |
+| **Syslog Collector** | Log Aggregation | Internal only (OT network) |
+| **Wireshark** | Packet Analysis | `https://13.206.102.61:3001` |
+| **CTF Server** | Challenge Scoring | `http://13.206.102.61:8090` |
+
+> ⚠️ Wireshark uses HTTPS. Your browser will show a security warning — click **Advanced → Proceed** to continue.
 
 ---
 
@@ -311,7 +310,7 @@ To prevent catastrophic train derailments, the Master PLC has hard-coded safety 
 
 ## Using Wireshark for Network Forensics
 
-Open **Wireshark** at `http://localhost:3000` in your browser.
+Open **Wireshark** at `https://13.206.102.61:3001` in your browser. Click **Advanced → Proceed** on the security warning.
 
 <div class="card">
   <h3>What to Look For</h3>
@@ -339,7 +338,7 @@ Practice capturing traffic while a partner runs the attack scripts. You will nee
     <div class="card">
       <h3>How it Works</h3>
       <ul>
-        <li>Open the <strong>CTF Scoreboard</strong> at <code>http://localhost:8090</code></li>
+        <li>Open the <strong>CTF Scoreboard</strong> at <code>http://13.206.102.61:8090</code></li>
         <li>Register your team name</li>
         <li>Solve challenges and submit flags to earn points</li>
         <li>10 challenges across 4 categories</li>
@@ -368,13 +367,11 @@ You have access to these tools during the CTF:
 
 | Tool | Access | Purpose |
 |---|---|---|
-| **SCADA Dashboard** | `localhost:8081` | Monitor the system state in real time |
-| **Wireshark** | `localhost:3000` | Capture and analyze network traffic |
+| **SCADA Dashboard** | `http://13.206.102.61:8081` | Monitor the system state in real time |
+| **Wireshark** | `https://13.206.102.61:3001` | Capture and analyze network traffic |
 | **Attack Script** | `python scripts/modbus-attack.py` | Pre-built attack vectors |
 | **curl / browser** | Your terminal | Craft custom API requests |
-| **Docker CLI** | Your terminal | Start/stop containers |
-| **Master PLC API** | `localhost:8085/api/status` | Directly query system state |
-| **Slave PLC APIs** | `localhost:8086-8088` | Directly query field devices |
+| **Master PLC API** | `http://13.206.102.61:8085/api/status` | Directly query system state |
 
 ---
 
@@ -401,19 +398,16 @@ You have access to these tools during the CTF:
 
 | What | Where |
 |---|---|
-| SCADA Dashboard | `http://localhost:8081` |
-| CTF Scoreboard | `http://localhost:8090` |
-| Wireshark | `http://localhost:3000` |
-| Master PLC API | `http://localhost:8085` |
-| Slave PLC 1 (North) | `http://localhost:8086` |
-| Slave PLC 2 (Central) | `http://localhost:8087` |
-| Slave PLC 3 (South) | `http://localhost:8088` |
-| Syslog | `localhost:5140` (UDP) |
+| SCADA Dashboard | `http://13.206.102.61:8081` |
+| CTF Scoreboard | `http://13.206.102.61:8090` |
+| Wireshark | `https://13.206.102.61:3001` (click Advanced → Proceed) |
+| Master PLC API | `http://13.206.102.61:8085/api/status` |
 | Attack Script | `python scripts/modbus-attack.py` |
 
 ---
 
 # Questions & Lab Kickoff
 
-### Please navigate to your local lab instance to begin.
-*The TA will be walking around to assist with networking or Docker issues.*
+### Open your browser and navigate to the SCADA Dashboard to begin.
+### `http://13.206.102.61:8081`
+*The instructor will walk you through the first scenario.*
